@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<fluid_simulation>
+	<number>7225</number>
+	<gravity_multiplier>0</gravity_multiplier>
+	<particle_size>7.94192</particle_size>
+	<target_density>1</target_density>
+	<pressure_multiplier>600</pressure_multiplier>
+	<near_pressure_multiplier>500</near_pressure_multiplier>
+	<viscosity_strength>0.25</viscosity_strength>
+	<collision_damping>0.05</collision_damping>
+	<width>700</width>
+	<height>500</height>
+	<reset_scale>0.863028</reset_scale>
+</fluid_simulation>
