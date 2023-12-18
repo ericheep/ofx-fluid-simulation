@@ -3,6 +3,10 @@ Fluid Simulation in openFrameworks.
 
 A port of [Sebastian Lague's fluid simulation](https://github.com/SebLague/Fluid-Sim/) in Unity. This work was done on Silicon Mac.
 
+# dependences
+
+This project requires the ofxGui addon and openAPI TBB. 
+
 # OpenAPI TBB Install
 
 This project requires openAPI TBB to be installed and added to this XCode project. 
