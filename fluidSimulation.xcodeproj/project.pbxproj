@@ -12,7 +12,7 @@
 		"2C64AF9E-DA67-4126-BA7B-95F3A890826B" /* ofxBaseGui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "9BC6F2E6-40D1-4ADB-9B69-27E861736213" /* ofxBaseGui.cpp */; };
 		"58928C1C-5C5E-4E48-B72A-25B540760064" /* ofxGuiGroup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "5E5FFE9A-83F6-40AF-8E5D-51C166391843" /* ofxGuiGroup.cpp */; };
 		"59DAC105-E57C-4260-9655-5F2E18FA1096" /* ofxButton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "9549D1AB-620B-4C50-A176-564A7DEE889B" /* ofxButton.cpp */; };
-		"5D71E36F-0CB8-47B6-B74E-0DCCFADC67E7" /* ParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "5CAC3BBD-D553-4CAB-A2D9-8324CA75206C" /* ParticleSystem.cpp */; };
+		"5D71E36F-0CB8-47B6-B74E-0DCCFADC67E7" /* FluidSystem2D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "5CAC3BBD-D553-4CAB-A2D9-8324CA75206C" /* FluidSystem2D.cpp */; };
 		"74A5D366-AFB2-45CA-B125-BA2F2534AF78" /* ofxPanel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "178A3219-852D-47A3-B44E-0922B8B1B6ED" /* ofxPanel.cpp */; };
 		"7BA32CF5-C2DF-4D68-8B18-4856735BDC2C" /* ofxSlider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "7C7E0315-7084-4A75-B06D-98A2972EB384" /* ofxSlider.cpp */; };
 		"B082F6B7-0C10-4170-862F-F5080B7DA538" /* ofxInputField.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "6CBB5DB2-DE7E-486D-BFF6-847A7CE6CC30" /* ofxInputField.cpp */; };
@@ -58,7 +58,7 @@
 		"47F420ED-9B71-4C6D-93A6-BF6630054B1E" /* ofxInputField.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = ofxInputField.h; path = ../../../addons/ofxGui/src/ofxInputField.h; sourceTree = SOURCE_ROOT; };
 		"5C217C7B-724A-432B-876C-A4D5756D44DA" /* ofxGuiUtils.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = ofxGuiUtils.h; path = ../../../addons/ofxGui/src/ofxGuiUtils.h; sourceTree = SOURCE_ROOT; };
 		"5C961768-EB0F-4B19-AA8B-2BFAFF1BE9B7" /* Kernels.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = Kernels.hpp; path = src/Kernels.hpp; sourceTree = SOURCE_ROOT; };
-		"5CAC3BBD-D553-4CAB-A2D9-8324CA75206C" /* ParticleSystem.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = ParticleSystem.cpp; path = src/ParticleSystem.cpp; sourceTree = SOURCE_ROOT; };
+		"5CAC3BBD-D553-4CAB-A2D9-8324CA75206C" /* FluidSystem2D.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = FluidSystem2D.cpp; path = src/FluidSystem2D.cpp; sourceTree = SOURCE_ROOT; };
 		"5E5FFE9A-83F6-40AF-8E5D-51C166391843" /* ofxGuiGroup.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = ofxGuiGroup.cpp; path = ../../../addons/ofxGui/src/ofxGuiGroup.cpp; sourceTree = SOURCE_ROOT; };
 		"6CBB5DB2-DE7E-486D-BFF6-847A7CE6CC30" /* ofxInputField.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = ofxInputField.cpp; path = ../../../addons/ofxGui/src/ofxInputField.cpp; sourceTree = SOURCE_ROOT; };
 		"7C7E0315-7084-4A75-B06D-98A2972EB384" /* ofxSlider.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = ofxSlider.cpp; path = ../../../addons/ofxGui/src/ofxSlider.cpp; sourceTree = SOURCE_ROOT; };
@@ -81,7 +81,7 @@
 		E4EB6923138AFD0F00A09F29 /* Project.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Project.xcconfig; sourceTree = "<group>"; };
 		"EA5C7641-61D4-4955-8FC8-9D4B41E6C51B" /* ofxToggle.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = ofxToggle.h; path = ../../../addons/ofxGui/src/ofxToggle.h; sourceTree = SOURCE_ROOT; };
 		"F62CC03F-D63A-4478-97AA-64A242414D46" /* ofxSliderGroup.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = ofxSliderGroup.cpp; path = ../../../addons/ofxGui/src/ofxSliderGroup.cpp; sourceTree = SOURCE_ROOT; };
-		"FA26013E-E146-46B0-A300-898E4C779296" /* ParticleSystem.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = ParticleSystem.hpp; path = src/ParticleSystem.hpp; sourceTree = SOURCE_ROOT; };
+		"FA26013E-E146-46B0-A300-898E4C779296" /* FluidSystem2D.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = FluidSystem2D.hpp; path = src/FluidSystem2D.hpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -166,8 +166,8 @@
 				"5C961768-EB0F-4B19-AA8B-2BFAFF1BE9B7" /* Kernels.hpp */,
 				"AD6D4A80-7079-4621-B933-A5F37E5BF220" /* Particle.cpp */,
 				"7DE2022D-8690-4CDE-BD6A-092FF599927A" /* Particle.hpp */,
-				"5CAC3BBD-D553-4CAB-A2D9-8324CA75206C" /* ParticleSystem.cpp */,
-				"FA26013E-E146-46B0-A300-898E4C779296" /* ParticleSystem.hpp */,
+				"5CAC3BBD-D553-4CAB-A2D9-8324CA75206C" /* FluidSystem2D.cpp */,
+				"FA26013E-E146-46B0-A300-898E4C779296" /* FluidSystem2D.hpp */,
 			);
 			path = src;
 			sourceTree = SOURCE_ROOT;
@@ -267,7 +267,7 @@
 				E4B69E210A3A1BDC003C02F2 /* ofApp.cpp in Sources */,
 				"BDD00ECD-B59B-4986-9DD0-B8C5D33955AA" /* Kernels.cpp in Sources */,
 				"05EBAA55-0071-4C5E-8ED3-52C72CF7B5D9" /* Particle.cpp in Sources */,
-				"5D71E36F-0CB8-47B6-B74E-0DCCFADC67E7" /* ParticleSystem.cpp in Sources */,
+				"5D71E36F-0CB8-47B6-B74E-0DCCFADC67E7" /* FluidSystem2D.cpp in Sources */,
 				"2C64AF9E-DA67-4126-BA7B-95F3A890826B" /* ofxBaseGui.cpp in Sources */,
 				"59DAC105-E57C-4260-9655-5F2E18FA1096" /* ofxButton.cpp in Sources */,
 				"14D25579-A9C0-401F-8125-13766C2743A0" /* ofxColorPicker.cpp in Sources */,

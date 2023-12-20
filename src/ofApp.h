@@ -2,9 +2,8 @@
 
 #include "ofMain.h"
 #include "ofxGui.h"
-// #include "ofxTbb.h"
 
-#include "ParticleSystem.hpp"
+#include "FluidSystem2D.hpp"
 
 class ofApp : public ofBaseApp{
 public:
@@ -19,16 +18,18 @@ public:
     void mouseReleased(int x, int y, int button) override;
     void windowResized(int w, int h) override;
 private:
-    ParticleSystem fluidSystem;
+    FluidSystem2D fluidSystem;
 
     ofxPanel gui;
     ofxIntSlider numberParticles;
     ofxFloatSlider particleSize, collisionDamping, resetScale;
-    ofxFloatSlider targetDensity, nearPressureMultiplier, pressureMultiplier, gravityMultiplier, timeScalar, viscosityStrength, lineWidthMax, velocityHue;
+    ofxFloatSlider targetDensity, nearPressureMultiplier, pressureMultiplier, gravityMultiplier, timeScalar, viscosityStrength, lineWidthScalar, velocityHue, lineWidthMinimum;
     ofxIntSlider boundingBoxWidth, boundingBoxHeight, mouseRadius;
     ofxButton resetRandomButton, resetGridButton, resetCircleButton;
+    ofColor backgroundColor, hotColor, coolColor;
     
     Boolean pauseActive;
+    Boolean SVG_MODE;
     
     float widthRatio, heightRatio;
     

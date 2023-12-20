@@ -2,13 +2,15 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
+    SVG_MODE = true;
+    
     ofxGuiSetFont("DankMono-Bold.ttf", 10);
     ofxGuiSetBorderColor(16);
     gui.setup("fluid simulation");
     gui.setSize(170, 150);
     gui.setDefaultHeight(12);
     
-    gui.add(numberParticles.setup("number", 20000, 50, 40000));
+    gui.add(numberParticles.setup("number", 25000, 50, 50000));
     gui.add(gravityMultiplier.setup("gravity multiplier", 0.0, 0.0, 15.0));
     gui.add(particleSize.setup("particle size", 17.0, 0.5, 100.0));
     gui.add(targetDensity.setup("target density", 1.0, 0.1, 2.0));
@@ -18,10 +20,13 @@ void ofApp::setup(){
     gui.add(collisionDamping.setup("collision damping", 0.05, 0.1, 1.5));
 
     // settings for pen plotting
-    // gui.add(boundingBoxWidth.setup("width", 720, 50, ofGetWidth()));
-    // gui.add(boundingBoxHeight.setup("height", 528, 50, ofGetHeight()));
-    gui.add(boundingBoxWidth.setup("width", ofGetWidth(), 50, ofGetWidth()));
-    gui.add(boundingBoxHeight.setup("height", ofGetHeight(), 50, ofGetHeight()));
+    if (SVG_MODE) {
+        gui.add(boundingBoxWidth.setup("width", 850, 50, ofGetWidth()));
+        gui.add(boundingBoxHeight.setup("height", 1100, 50, ofGetHeight()));
+    } else {
+        gui.add(boundingBoxWidth.setup("width", ofGetWidth(), 50, ofGetWidth()));
+        gui.add(boundingBoxHeight.setup("height", ofGetHeight(), 50, ofGetHeight()));
+    }
 
     resetRandomButton.addListener(this, &ofApp::resetRandom);
     gui.add(resetRandomButton.setup("reset random", 20, 12));
@@ -32,8 +37,9 @@ void ofApp::setup(){
     resetCircleButton.addListener(this, &ofApp::resetCircle);
     gui.add(resetCircleButton.setup("reset circle", 20, 12));
     gui.add(mouseRadius.setup("mouse radius", 150, 10, 500));
-    gui.add(lineWidthMax.setup("line width", 12.5, 1.0, 25.0));
     gui.add(velocityHue.setup("velocity hue", 500, 10, 1000));
+    gui.add(lineWidthScalar.setup("line width scalar", 0.1, 0.0, 2.5));
+    gui.add(lineWidthMinimum.setup("line width min", 0.0, 0.0, 5.0));
 
     ofSetFrameRate(60);
     fluidSystem.setDeltaTime(1.0 / 30.0);
@@ -46,6 +52,18 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::update() {
+    if (SVG_MODE) {
+        backgroundColor = ofColor::white;
+        fluidSystem.setCoolColor(ofColor::black);
+        fluidSystem.setHotColor(ofColor::black);
+        fluidSystem.setLineThickness(1);
+    } else {
+        backgroundColor = ofColor::black;
+        fluidSystem.setCoolColor(ofColor::blue);
+        fluidSystem.setHotColor(ofColor::orangeRed);
+        fluidSystem.setLineThickness(3);
+    }
+    
     widthRatio = boundingBoxWidth / float(ofGetWidth());
     heightRatio = boundingBoxHeight / float(ofGetHeight());
     
@@ -59,15 +77,17 @@ void ofApp::update() {
     fluidSystem.setRadius(particleSize / 2.0);
     fluidSystem.setBoundingBox(ofVec2f(boundingBoxWidth, boundingBoxHeight));
     fluidSystem.setMouseRadius(mouseRadius);
-    fluidSystem.setLineWidthMax(lineWidthMax);
     fluidSystem.setVelocityHue(velocityHue);
+    fluidSystem.setLineWidthScalar(lineWidthScalar);
+    fluidSystem.setLineWidthMinimum(lineWidthMinimum);
     
     fluidSystem.update();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    ofBackground(ofColor::black);
+    ofBackground(backgroundColor);
+
     fluidSystem.draw();
     gui.draw();
     std::stringstream strm;
