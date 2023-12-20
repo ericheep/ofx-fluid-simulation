@@ -11,9 +11,9 @@
 
 class Particle {
 public:
-    float radius, density, nearDensity, lineWidth, magnitude, maxMagnitude, thickness, theta, lineWidthMax, velocityHue;
-    ofVec2f position, velocity, predictedPosition;
-    ofColor particleColor;
+    float radius, density, nearDensity, lineWidth, magnitude, maxMagnitude, theta, lineWidthScalar, lineWidthMinimum, velocityHue, lineThickness;
+    ofVec3f position, velocity, predictedPosition;
+    ofColor particleColor, coolColor, hotColor;
     vector <int> indicesWithinRadius;
     
     Particle(ofVec3f position, float radius);

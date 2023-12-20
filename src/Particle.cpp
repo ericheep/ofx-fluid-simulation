@@ -10,14 +10,14 @@ Particle::Particle(ofVec3f _position, float _radius) {
     predictedPosition = _position;
     radius = _radius;
     lineWidth = 0;
-    lineWidthMax = 1;
+    lineWidthScalar = 1;
+    lineThickness = 1;
     magnitude = 0;
     maxMagnitude= 0;
-    thickness = 3.0;
     theta = 0;
     velocityHue = 0.0;
     
-    velocity = ofVec2f::zero();
+    velocity = ofVec3f::zero();
     nearDensity = 0.0;
     density = 0.0;
     particleColor = ofColor::black;
@@ -26,12 +26,12 @@ Particle::Particle(ofVec3f _position, float _radius) {
 void Particle::update() {
     magnitude = velocity.length();
     theta = atan(velocity.y / velocity.x);
-    float magnitudeScalar = magnitude / 15;
-    lineWidth = fmin(magnitudeScalar * lineWidthMax + 2, lineWidthMax);
-
-    float scalar = fmin(velocity.length() / velocityHue, 1.0);
-    particleColor = ofColor::blue.getLerped(ofColor::orangeRed, scalar);
-    particleColor.setSaturation(175.0);
+    
+    lineWidth = magnitude * lineWidthScalar + lineWidthMinimum;
+    
+    float colorScalar = fmin(magnitude / velocityHue, 1.0);
+    particleColor = coolColor.getLerped(hotColor, colorScalar);
+    // particleColor.setSaturation(175.0);
     // particleColor.a = 100;
 }
 
@@ -45,11 +45,15 @@ void Particle::draw() {
     ofDrawCircle(position.x, position.y, radius)
     */
     
-    ofSetColor(particleColor);
     ofPushMatrix();
     ofTranslate(position.x, position.y);
     ofRotateRad(theta);
-    ofDrawRectangle(-lineWidthMax / 2.0, -thickness / 2.0, lineWidthMax, thickness);
+    ofSetColor(particleColor);
+    if (lineThickness == 1) {
+        ofDrawLine(-lineWidth / 2.0, 0, lineWidth, 0);
+    } else {
+        ofDrawRectangle(-lineWidth / 2.0, -lineThickness / 2.0, lineWidth, lineThickness);
+    }
     ofPopMatrix();
 }
 
