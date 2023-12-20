@@ -1,10 +1,10 @@
 //
-//  ParticleSystem.hpp
+//  FluidSystem2D.hpp
 //  fluidSimulation
 //
 
-#ifndef ParticleSystem_hpp
-#define ParticleSystem_hpp
+#ifndef FluidSystem2D_hpp
+#define FluidSystem2D_hpp
 
 #include <stdio.h>
 #include "ofMain.h"
@@ -13,9 +13,9 @@
 #include "tbb/parallel_for.h"
 #include "tbb/parallel_sort.h"
 
-class ParticleSystem {
+class FluidSystem2D {
 public:
-    ParticleSystem();
+    FluidSystem2D();
     
     void update();
     void draw();
@@ -58,8 +58,12 @@ public:
     void setCollisionDamping(float collisionDamping);
     void setBoundingBox(ofVec2f bounds);
     void setMouseRadius(int mouseRadius);
-    void setLineWidthMax(float lineWidth);
+    void setLineWidthScalar(float lineWidthMax);
+    void setLineWidthMinimum(float lineWidthMinimum);
+    void setLineThickness(float lineThickness);
     void setVelocityHue(float hue);
+    void setHotColor(ofColor hotColor);
+    void setCoolColor(ofColor coolColor);
 
     // spatial lookup functions
     unsigned int hashCell(int cellX, int cellY);
@@ -87,7 +91,7 @@ private:
     vector<pair<int, unsigned int>> spatialLookup;
     vector<int> startIndices;
     vector<pair<int, int>> cellOffsets;
-    Boolean mouseInputActive, pauseActive, nextFrameActive, exportFrameActive;
+    Boolean mouseInputActive, pauseActive, nextFrameActive, exportFrameActive, SVG_MODE;
     int mouseButton, mouseRadius;
 };
 

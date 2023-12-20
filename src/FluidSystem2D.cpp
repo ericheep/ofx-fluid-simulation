@@ -1,11 +1,11 @@
 //
-//  ParticleSystem.cpp
+//  FluidSystem2D.cpp
 //  fluidSimulation
 //
 
-#include "ParticleSystem.hpp"
+#include "FluidSystem2D.hpp"
 
-ParticleSystem::ParticleSystem() {
+FluidSystem2D::FluidSystem2D() {
     radius = 10;
     kernels.calculateVolumesFromRadius(radius);
     
@@ -35,10 +35,7 @@ ParticleSystem::ParticleSystem() {
     setBoundingBox(ofVec2f(ofGetWidth() * 0.8, ofGetHeight() * 0.8));
 }
 
-void ParticleSystem::draw() {
-    ofBackground(ofColor::black);
-    ofNoFill();
-    
+void FluidSystem2D::draw() {
     if (exportFrameActive) ofBeginSaveScreenAsSVG("export.svg");
     
     ofFill();
@@ -52,10 +49,8 @@ void ParticleSystem::draw() {
     }
 }
 
-void ParticleSystem::update() {
+void FluidSystem2D::update() {
     if (!pauseActive || nextFrameActive) {
-        //#pragma omp parallel for
-        
         tbb::parallel_for( tbb::blocked_range<int>(0, particles.size()), [&](tbb::blocked_range<int> r) {
             for (int i = r.begin(); i < r.end(); i++) {
                 ofVec2f externalForce = calculateExternalForce(i);
@@ -86,27 +81,24 @@ void ParticleSystem::update() {
             }
         });
         
-        float maxMagnitude = 0;
         tbb::parallel_for( tbb::blocked_range<int>(0, particles.size()), [&](tbb::blocked_range<int> r) {
             for (int i = r.begin(); i < r.end(); i++) {
                 particles[i].position += particles[i].velocity * deltaTime;
                 resolveCollisions(i);
-                particles[i].update();
-                maxMagnitude = particles[i].magnitude;
-            }
-        });
-        
-        tbb::parallel_for( tbb::blocked_range<int>(0, particles.size()), [&](tbb::blocked_range<int> r) {
-            for (int i = r.begin(); i < r.end(); i++) {
-                particles[i].maxMagnitude = maxMagnitude;
             }
         });
         
         nextFrameActive = false;
     }
+
+    tbb::parallel_for( tbb::blocked_range<int>(0, particles.size()), [&](tbb::blocked_range<int> r) {
+        for (int i = r.begin(); i < r.end(); i++) {
+            particles[i].update();
+        }
+    });
 }
 
-ofVec2f ParticleSystem::calculateInteractiveForce(int particleIndex) {
+ofVec2f FluidSystem2D::calculateInteractiveForce(int particleIndex) {
     ofVec2f particlePosition = particles[particleIndex].position;
     ofVec2f interactiveForce= ofVec2f::zero();
     
@@ -120,7 +112,7 @@ ofVec2f ParticleSystem::calculateInteractiveForce(int particleIndex) {
     return interactiveForce;
 }
 
-ofVec2f ParticleSystem::pullParticlesToPoint(ofVec2f pointA, ofVec2f pointB) {
+ofVec2f FluidSystem2D::pullParticlesToPoint(ofVec2f pointA, ofVec2f pointB) {
     ofVec2f interactiveForce = ofVec2f::zero();
     
     float inputRadius = mouseRadius;
@@ -136,7 +128,7 @@ ofVec2f ParticleSystem::pullParticlesToPoint(ofVec2f pointA, ofVec2f pointB) {
     return interactiveForce;
 }
 
-ofVec2f ParticleSystem::pushParticlesAwayFromPoint(ofVec2f pointA, ofVec2f pointB) {
+ofVec2f FluidSystem2D::pushParticlesAwayFromPoint(ofVec2f pointA, ofVec2f pointB) {
     ofVec2f interactiveForce = ofVec2f::zero();
     
     float inputRadius = mouseRadius;
@@ -152,7 +144,7 @@ ofVec2f ParticleSystem::pushParticlesAwayFromPoint(ofVec2f pointA, ofVec2f point
     return interactiveForce;
 }
 
-ofVec2f ParticleSystem::calculateExternalForce(int particleIndex) {
+ofVec2f FluidSystem2D::calculateExternalForce(int particleIndex) {
     ofVec2f interactiveForce = ofVec2f::zero();
     
     if (mouseInputActive) {
@@ -162,14 +154,13 @@ ofVec2f ParticleSystem::calculateExternalForce(int particleIndex) {
     return interactiveForce + down * gravity * gravityMultiplier * deltaTime;
 }
 
-pair<float, float> ParticleSystem::calculateDensity(int particleIndex) {
+pair<float, float> FluidSystem2D::calculateDensity(int particleIndex) {
     vector<int> indicesWithinRadius = particles[particleIndex].indicesWithinRadius;
     ofVec2f particlePosition = particles[particleIndex].predictedPosition;
     
     float density = 0.0f;
     float nearDensity = 0.0f;
     
-#pragma omp parallel for
     for (int i = 0; i < indicesWithinRadius.size(); i++) {
         int neighborParticleIndex = indicesWithinRadius[i];
         
@@ -181,7 +172,7 @@ pair<float, float> ParticleSystem::calculateDensity(int particleIndex) {
     return pair<float, float> (density, nearDensity);
 }
 
-ofVec2f ParticleSystem::calculatePressureForce(int particleIndex) {
+ofVec2f FluidSystem2D::calculatePressureForce(int particleIndex) {
     vector<int> indicesWithinRadius = particles[particleIndex].indicesWithinRadius;
     ofVec2f particlePosition = particles[particleIndex].predictedPosition;
     float density = particles[particleIndex].density;
@@ -218,7 +209,7 @@ ofVec2f ParticleSystem::calculatePressureForce(int particleIndex) {
     return pressureForce;
 }
 
-ofVec2f ParticleSystem::calculateViscosityForce(int particleIndex) {
+ofVec2f FluidSystem2D::calculateViscosityForce(int particleIndex) {
     vector<int> indicesWithinRadius = particles[particleIndex].indicesWithinRadius;
     ofVec2f particlePosition = particles[particleIndex].predictedPosition;
     ofVec2f viscosityForce = ofVec2f::zero();
@@ -235,30 +226,30 @@ ofVec2f ParticleSystem::calculateViscosityForce(int particleIndex) {
     return viscosityForce * viscosityStrength;
 }
 
-float ParticleSystem::calculatePressureFromDensity(float density) {
+float FluidSystem2D::calculatePressureFromDensity(float density) {
     float densityError = density - targetDensity;
     return densityError * pressureMultiplier;
 }
 
-float ParticleSystem::calculateNearPressureFromDensity(float nearDensity) {
+float FluidSystem2D::calculateNearPressureFromDensity(float nearDensity) {
     return nearDensity * nearPressureMultiplier;
 }
 
 // mouse input
 
-void ParticleSystem::mouseInput(int x, int y, int button, Boolean active) {
+void FluidSystem2D::mouseInput(int x, int y, int button, Boolean active) {
     mouseInputActive = active;
     mouseButton = button;
     mouseInput(x, y);
 }
 
-void ParticleSystem::mouseInput(int x, int y) {
+void FluidSystem2D::mouseInput(int x, int y) {
     mousePosition = ofVec2f(x, y);
 }
 
 // spatial lookup
 
-vector<int> ParticleSystem::foreachPointWithinRadius(int particleIndex) {
+vector<int> FluidSystem2D::foreachPointWithinRadius(int particleIndex) {
     ofVec2f position = particles[particleIndex].position;
     
     pair<int, int> center = positionToCellCoordinate(position, radius);
@@ -290,7 +281,7 @@ vector<int> ParticleSystem::foreachPointWithinRadius(int particleIndex) {
     return indicesWithinRadius;
 }
 
-void ParticleSystem::updateSpatialLookup() {
+void FluidSystem2D::updateSpatialLookup() {
     tbb::parallel_for( tbb::blocked_range<int>(0, particles.size()), [&](tbb::blocked_range<int> r) {
         for (int i = r.begin(); i < r.end(); i++) {
             pair<int, int> cell = positionToCellCoordinate(particles[i].position, radius);
@@ -315,21 +306,21 @@ void ParticleSystem::updateSpatialLookup() {
     });
 }
 
-unsigned int ParticleSystem::hashCell(int cellX, int cellY) {
+unsigned int FluidSystem2D::hashCell(int cellX, int cellY) {
     unsigned int a = u_int(cellX * 15823);
     unsigned int b = u_int(cellY * 9737333);
     return a + b;
 }
 
-unsigned int ParticleSystem::getKeyFromHash(unsigned int hash) {
+unsigned int FluidSystem2D::getKeyFromHash(unsigned int hash) {
     return hash % u_int(spatialLookup.size());
 }
 
-pair<int, int> ParticleSystem::positionToCellCoordinate(ofVec2f position, float radius) {
+pair<int, int> FluidSystem2D::positionToCellCoordinate(ofVec2f position, float radius) {
     return pair<int, int> (int(position.x / radius), int(position.y / radius));
 }
 
-void ParticleSystem::resolveCollisions(int particleIndex) {
+void FluidSystem2D::resolveCollisions(int particleIndex) {
     if (particles[particleIndex].position.x < xBounds.x) {
         particles[particleIndex].velocity.x *= -1.0 * collisionDamping;
         particles[particleIndex].position.x = xBounds.x;
@@ -354,26 +345,26 @@ void ParticleSystem::resolveCollisions(int particleIndex) {
 
 // create particles
 
-void ParticleSystem::addParticle() {
+void FluidSystem2D::addParticle() {
     float x = ofRandom(boundingBox.x, boundingBox.x + boundingBox.width);
     float y = ofRandom(boundingBox.y, boundingBox.y + boundingBox.height);
     addParticle(ofVec2f(x, y));
 }
 
-void ParticleSystem::addParticle(ofVec2f position) {
+void FluidSystem2D::addParticle(ofVec2f position) {
     particles.push_back(Particle(position, radius));
     spatialLookup.resize(particles.size());
     startIndices.resize(particles.size());
 }
 
-ofVec2f ParticleSystem::getRandomDirection() {
+ofVec2f FluidSystem2D::getRandomDirection() {
     ofVec2f randomDirection = ofVec2f(1.0, 0.0).rotateRad(ofRandom(0, TWO_PI));
     return randomDirection;
 }
 
 // reset particles
 
-void ParticleSystem::resetRandom() {
+void FluidSystem2D::resetRandom() {
     for (int i = 0; i < particles.size(); i++) {
         float x = ofRandom(boundingBox.x, boundingBox.x + boundingBox.width);
         float y = ofRandom(boundingBox.y, boundingBox.y + boundingBox.height);
@@ -382,7 +373,7 @@ void ParticleSystem::resetRandom() {
     }
 }
 
-void ParticleSystem::resetGrid(float scale) {
+void FluidSystem2D::resetGrid(float scale) {
     int rows = ceil(pow(particles.size(), 0.5));
     int cols = ceil(pow(particles.size(), 0.5));
     
@@ -409,7 +400,7 @@ void ParticleSystem::resetGrid(float scale) {
     }
 }
 
-void ParticleSystem::resetCircle(float scale) {
+void FluidSystem2D::resetCircle(float scale) {
     ofVec2f center = ofVec2f(ofGetWidth() / 2.0, ofGetHeight() / 2.0);
     
     float diameter = boundingBox.width;
@@ -431,21 +422,21 @@ void ParticleSystem::resetCircle(float scale) {
     }
 }
 
-void ParticleSystem::pause(Boolean _pauseActive) {
+void FluidSystem2D::pause(Boolean _pauseActive) {
     pauseActive = _pauseActive;
 }
 
-void ParticleSystem::nextFrame() {
+void FluidSystem2D::nextFrame() {
     nextFrameActive = true;
 }
 
-void ParticleSystem::saveSvg() {
+void FluidSystem2D::saveSvg() {
     exportFrameActive = true;
 }
 
 // setters
 
-void ParticleSystem::setNumberParticles(int number) {
+void FluidSystem2D::setNumberParticles(int number) {
     if (number > particles.size()) {
         while (particles.size() < number) {
             addParticle();
@@ -462,13 +453,13 @@ void ParticleSystem::setNumberParticles(int number) {
     }
 }
 
-void ParticleSystem::setBoundingBox(ofVec2f _bounds) {
+void FluidSystem2D::setBoundingBox(ofVec2f _bounds) {
     boundingBox.setFromCenter(ofGetWidth() / 2.0, ofGetHeight() / 2.0, _bounds.x, _bounds.y);
     xBounds = ofVec2f(boundingBox.x + radius, boundingBox.x + boundingBox.width - radius);
     yBounds = ofVec2f(boundingBox.y + radius, boundingBox.y + boundingBox.height - radius);
 }
 
-void ParticleSystem::setRadius(float _radius) {
+void FluidSystem2D::setRadius(float _radius) {
     for (int i = 0; i < particles.size(); i++) {
         particles[i].setRadius(_radius);
     }
@@ -479,46 +470,70 @@ void ParticleSystem::setRadius(float _radius) {
     }
 }
 
-void ParticleSystem::setGravityMultiplier(float _gravityMultiplier) {
+void FluidSystem2D::setGravityMultiplier(float _gravityMultiplier) {
     gravityMultiplier = _gravityMultiplier;
 }
 
-void ParticleSystem::setDeltaTime(float _deltaTime) {
+void FluidSystem2D::setDeltaTime(float _deltaTime) {
     deltaTime = _deltaTime;
 }
 
-void ParticleSystem::setCollisionDamping(float _collisionDamping) {
+void FluidSystem2D::setCollisionDamping(float _collisionDamping) {
     collisionDamping = _collisionDamping;
 }
 
-void ParticleSystem::setTargetDensity(float _targetDensity) {
+void FluidSystem2D::setTargetDensity(float _targetDensity) {
     targetDensity = _targetDensity;
 }
 
-void ParticleSystem::setPressureMultiplier(float _pressureMultiplier) {
+void FluidSystem2D::setPressureMultiplier(float _pressureMultiplier) {
     pressureMultiplier = _pressureMultiplier;
 }
 
-void ParticleSystem::setViscosityStrength(float _viscosityStrength) {
+void FluidSystem2D::setViscosityStrength(float _viscosityStrength) {
     viscosityStrength = _viscosityStrength;
 }
 
-void ParticleSystem::setNearPressureMultiplier(float _nearPressureMultiplier) {
+void FluidSystem2D::setNearPressureMultiplier(float _nearPressureMultiplier) {
     nearPressureMultiplier = _nearPressureMultiplier;
 }
 
-void ParticleSystem::setMouseRadius(int _mouseRadius) {
+void FluidSystem2D::setMouseRadius(int _mouseRadius) {
     mouseRadius = _mouseRadius;
 }
 
-void ParticleSystem::setLineWidthMax(float _lineWidthMax) {
+void FluidSystem2D::setVelocityHue(float _velocityHue) {
     for (int i = 0; i < particles.size(); i++) {
-        particles[i].lineWidthMax = _lineWidthMax;
+        particles[i].velocityHue = _velocityHue;
     }
 }
 
-void ParticleSystem::setVelocityHue(float _velocityHue) {
+void FluidSystem2D::setCoolColor(ofColor coolColor) {
     for (int i = 0; i < particles.size(); i++) {
-        particles[i].velocityHue = _velocityHue;
+        particles[i].coolColor = coolColor;
+    }
+}
+
+void FluidSystem2D::setHotColor(ofColor hotColor) {
+    for (int i = 0; i < particles.size(); i++) {
+        particles[i].hotColor = hotColor;
+    }
+}
+
+void FluidSystem2D::setLineWidthScalar(float lineWidthScalar) {
+    for (int i = 0; i < particles.size(); i++) {
+        particles[i].lineWidthScalar = lineWidthScalar;
+    }
+}
+
+void FluidSystem2D::setLineWidthMinimum(float lineWidthMinimum) {
+    for (int i = 0; i < particles.size(); i++) {
+        particles[i].lineWidthMinimum = lineWidthMinimum;
+    }
+}
+
+void FluidSystem2D::setLineThickness(float lineThickness) {
+    for (int i = 0; i < particles.size(); i++) {
+        particles[i].lineThickness = lineThickness;
     }
 }
