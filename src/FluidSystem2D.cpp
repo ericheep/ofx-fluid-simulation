@@ -6,46 +6,12 @@
 #include "FluidSystem2D.hpp"
 
 FluidSystem2D::FluidSystem2D() {
-    radius = 10;
-    kernels.calculateVolumesFromRadius(radius);
+    kernels.calculate2DVolumesFromRadius(radius);
     
-    predictionFactor = 1.0f / 120.0f;
-    pressureMultiplier = 1.0;
-    nearPressureMultiplier = 1.0;
-    targetDensity = 1.0;
-    viscosityStrength = 0.5;
-    
-    // 9.8 meters per second
-    gravity = 9.8;
-    gravityMultiplier = 1.0;
-    collisionDamping = 0.26;
-    pauseActive = false;
-    
-    cellOffsets.push_back(pair<int, int>(-1, 1));
-    cellOffsets.push_back(pair<int, int>(-1, 0));
-    cellOffsets.push_back(pair<int, int>(-1, -1));
-    cellOffsets.push_back(pair<int, int>(0, 1));
-    cellOffsets.push_back(pair<int, int>(0, 0));
-    cellOffsets.push_back(pair<int, int>(0, -1));
-    cellOffsets.push_back(pair<int, int>(1, 1));
-    cellOffsets.push_back(pair<int, int>(1, 0));
-    cellOffsets.push_back(pair<int, int>(1, -1));
-    
-    down = ofVec2f(0.0, 1.0);
-    setBoundingBox(ofVec2f(ofGetWidth() * 0.8, ofGetHeight() * 0.8));
-}
-
-void FluidSystem2D::draw() {
-    if (exportFrameActive) ofBeginSaveScreenAsSVG("export.svg");
-    
-    ofFill();
-    for (int i = 0; i < particles.size(); i++) {
-        particles[i].draw();
-    }
-    
-    if (exportFrameActive) {
-        ofEndSaveScreenAsSVG();
-        exportFrameActive = false;
+    for (int i = -1; i < 2; i++) {
+        for (int j = -1; j < 2; j++) {
+            cellOffsets.push_back(ofVec2f(i, j));
+        }
     }
 }
 
@@ -189,7 +155,7 @@ ofVec2f FluidSystem2D::calculatePressureForce(int particleIndex) {
         ofVec2f neighborPosition = particles[neighborParticleIndex].predictedPosition;
         float distance = particlePosition.distance(neighborPosition);
         ofVec2f direction = (neighborPosition - particlePosition) / distance;
-        direction = distance == 0.0 ? getRandomDirection() : direction;
+        direction = distance == 0.0 ? getRandom2DDirection() : direction;
         
         float slope = kernels.densityDerivative(distance, radius);
         float nearSlope = kernels.nearDensityDerivative(distance, radius);
@@ -235,18 +201,6 @@ float FluidSystem2D::calculateNearPressureFromDensity(float nearDensity) {
     return nearDensity * nearPressureMultiplier;
 }
 
-// mouse input
-
-void FluidSystem2D::mouseInput(int x, int y, int button, Boolean active) {
-    mouseInputActive = active;
-    mouseButton = button;
-    mouseInput(x, y);
-}
-
-void FluidSystem2D::mouseInput(int x, int y) {
-    mousePosition = ofVec2f(x, y);
-}
-
 // spatial lookup
 
 vector<int> FluidSystem2D::foreachPointWithinRadius(int particleIndex) {
@@ -260,8 +214,8 @@ vector<int> FluidSystem2D::foreachPointWithinRadius(int particleIndex) {
     vector<int> indicesWithinRadius;
     
     for (auto offsetPair : cellOffsets) {
-        int offsetX = offsetPair.first;
-        int offsetY = offsetPair.second;
+        int offsetX = offsetPair.x;
+        int offsetY = offsetPair.y;
         
         unsigned int key = getKeyFromHash(hashCell(centerX + offsetX, centerY + offsetY));
         int cellStartIndex = startIndices[key];
@@ -343,33 +297,14 @@ void FluidSystem2D::resolveCollisions(int particleIndex) {
     }
 }
 
-// create particles
-
-void FluidSystem2D::addParticle() {
-    float x = ofRandom(boundingBox.x, boundingBox.x + boundingBox.width);
-    float y = ofRandom(boundingBox.y, boundingBox.y + boundingBox.height);
-    addParticle(ofVec2f(x, y));
-}
-
-void FluidSystem2D::addParticle(ofVec2f position) {
-    particles.push_back(Particle(position, radius));
-    spatialLookup.resize(particles.size());
-    startIndices.resize(particles.size());
-}
-
-ofVec2f FluidSystem2D::getRandomDirection() {
-    ofVec2f randomDirection = ofVec2f(1.0, 0.0).rotateRad(ofRandom(0, TWO_PI));
-    return randomDirection;
-}
-
 // reset particles
 
 void FluidSystem2D::resetRandom() {
     for (int i = 0; i < particles.size(); i++) {
-        float x = ofRandom(boundingBox.x, boundingBox.x + boundingBox.width);
-        float y = ofRandom(boundingBox.y, boundingBox.y + boundingBox.height);
+        float x = ofRandom(bounds.x, bounds.x + boundsSize.x);
+        float y = ofRandom(bounds.y, bounds.y + boundsSize.y);
         particles[i].position = ofVec2f(x, y);
-        particles[i].velocity = getRandomDirection();
+        particles[i].velocity = getRandom2DDirection();
     }
 }
 
@@ -377,25 +312,28 @@ void FluidSystem2D::resetGrid(float scale) {
     int rows = ceil(pow(particles.size(), 0.5));
     int cols = ceil(pow(particles.size(), 0.5));
     
-    float xOffset = ofGetWidth() / 2.0 - boundingBox.width / 2.0 * scale;
-    float yOffset = ofGetHeight() / 2.0 - boundingBox.height / 2.0 * scale;
+    float width = boundsSize.x;
+    float height = boundsSize.y;
+    
+    float xOffset = ofGetWidth() / 2.0 - width / 2.0 * scale;
+    float yOffset = ofGetHeight() / 2.0 - height / 2.0 * scale;
     
     for (int i = 0; i < rows; i++) {
-        float xSpace = boundingBox.width * scale / float(rows + 1);
+        float xSpace = width * scale / float(rows + 1);
         float x = xSpace * (i + 1) + xOffset;
         
         for (int j = 0; j < cols; j++) {
             int particleIndex = i * cols + j;
             if (particleIndex >= particles.size()) return;
             
-            float ySpace = boundingBox.height * scale / float(cols + 1);
+            float ySpace = height * scale / float(cols + 1);
             float y = ySpace * (j + 1) + yOffset;
             
             float jitterX = xSpace * ofRandom(-0.1, 0.1);
             float jitterY = ySpace * ofRandom(-0.1, 0.1);
             
             particles[particleIndex].position = ofVec2f(x + jitterX, y + jitterY);
-            particles[particleIndex].velocity = getRandomDirection();
+            particles[particleIndex].velocity = getRandom2DDirection();
         }
     }
 }
@@ -403,9 +341,9 @@ void FluidSystem2D::resetGrid(float scale) {
 void FluidSystem2D::resetCircle(float scale) {
     ofVec2f center = ofVec2f(ofGetWidth() / 2.0, ofGetHeight() / 2.0);
     
-    float diameter = boundingBox.width;
-    if (boundingBox.height < boundingBox.width) {
-        diameter = boundingBox.height;
+    float diameter = boundsSize.x;
+    if (boundsSize.y < boundsSize.x) {
+        diameter = boundsSize.y;
     }
     
     float radius = diameter / 2.0 * scale;
@@ -418,122 +356,6 @@ void FluidSystem2D::resetCircle(float scale) {
         float y = sin(theta) * magnitude;
         
         particles[i].position = ofVec2f(x, y) + center;
-        particles[i].velocity = getRandomDirection();
-    }
-}
-
-void FluidSystem2D::pause(Boolean _pauseActive) {
-    pauseActive = _pauseActive;
-}
-
-void FluidSystem2D::nextFrame() {
-    nextFrameActive = true;
-}
-
-void FluidSystem2D::saveSvg() {
-    exportFrameActive = true;
-}
-
-// setters
-
-void FluidSystem2D::setNumberParticles(int number) {
-    if (number > particles.size()) {
-        while (particles.size() < number) {
-            addParticle();
-        }
-        spatialLookup.resize(particles.size());
-        startIndices.resize(particles.size());
-    }
-    if (number < particles.size()) {
-        while (particles.size() > number) {
-            particles.pop_back();
-        }
-        spatialLookup.resize(particles.size());
-        startIndices.resize(particles.size());
-    }
-}
-
-void FluidSystem2D::setBoundingBox(ofVec2f _bounds) {
-    boundingBox.setFromCenter(ofGetWidth() / 2.0, ofGetHeight() / 2.0, _bounds.x, _bounds.y);
-    xBounds = ofVec2f(boundingBox.x + radius, boundingBox.x + boundingBox.width - radius);
-    yBounds = ofVec2f(boundingBox.y + radius, boundingBox.y + boundingBox.height - radius);
-}
-
-void FluidSystem2D::setRadius(float _radius) {
-    for (int i = 0; i < particles.size(); i++) {
-        particles[i].setRadius(_radius);
-    }
-    
-    if (radius != _radius) {
-        kernels.calculateVolumesFromRadius(_radius);
-        radius = _radius;
-    }
-}
-
-void FluidSystem2D::setGravityMultiplier(float _gravityMultiplier) {
-    gravityMultiplier = _gravityMultiplier;
-}
-
-void FluidSystem2D::setDeltaTime(float _deltaTime) {
-    deltaTime = _deltaTime;
-}
-
-void FluidSystem2D::setCollisionDamping(float _collisionDamping) {
-    collisionDamping = _collisionDamping;
-}
-
-void FluidSystem2D::setTargetDensity(float _targetDensity) {
-    targetDensity = _targetDensity;
-}
-
-void FluidSystem2D::setPressureMultiplier(float _pressureMultiplier) {
-    pressureMultiplier = _pressureMultiplier;
-}
-
-void FluidSystem2D::setViscosityStrength(float _viscosityStrength) {
-    viscosityStrength = _viscosityStrength;
-}
-
-void FluidSystem2D::setNearPressureMultiplier(float _nearPressureMultiplier) {
-    nearPressureMultiplier = _nearPressureMultiplier;
-}
-
-void FluidSystem2D::setMouseRadius(int _mouseRadius) {
-    mouseRadius = _mouseRadius;
-}
-
-void FluidSystem2D::setVelocityHue(float _velocityHue) {
-    for (int i = 0; i < particles.size(); i++) {
-        particles[i].velocityHue = _velocityHue;
-    }
-}
-
-void FluidSystem2D::setCoolColor(ofColor coolColor) {
-    for (int i = 0; i < particles.size(); i++) {
-        particles[i].coolColor = coolColor;
-    }
-}
-
-void FluidSystem2D::setHotColor(ofColor hotColor) {
-    for (int i = 0; i < particles.size(); i++) {
-        particles[i].hotColor = hotColor;
-    }
-}
-
-void FluidSystem2D::setLineWidthScalar(float lineWidthScalar) {
-    for (int i = 0; i < particles.size(); i++) {
-        particles[i].lineWidthScalar = lineWidthScalar;
-    }
-}
-
-void FluidSystem2D::setLineWidthMinimum(float lineWidthMinimum) {
-    for (int i = 0; i < particles.size(); i++) {
-        particles[i].lineWidthMinimum = lineWidthMinimum;
-    }
-}
-
-void FluidSystem2D::setLineThickness(float lineThickness) {
-    for (int i = 0; i < particles.size(); i++) {
-        particles[i].lineThickness = lineThickness;
+        particles[i].velocity = getRandom2DDirection();
     }
 }

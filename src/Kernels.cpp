@@ -9,7 +9,15 @@ Kernels::Kernels() {
     
 }
 
-void Kernels::calculateVolumesFromRadius(float radius) {
+void Kernels::calculate3DVolumesFromRadius(float radius) {
+    poly6ScalingFactor = 315 / (64 * PI * pow(abs(radius), 9));
+    spikyPow3ScalingFactor = 15 / (PI * pow(radius, 6));
+    spikyPow2ScalingFactor = 15 / (2 * PI * pow(radius, 5));
+    spikyPow3DerivativeScalingFactor = 45 / (pow(radius, 6) * PI);
+    spikyPow2DerivativeScalingFactor = 15 / (pow(radius, 5) * PI);
+}
+
+void Kernels::calculate2DVolumesFromRadius(float radius) {
     poly6ScalingFactor = 4.0 / (PI * pow(radius, 8.0));
     spikyPow3ScalingFactor = 10 / (PI * pow(radius, 5.0));
     spikyPow2ScalingFactor = 6.0 / (PI * pow(radius, 4.0));

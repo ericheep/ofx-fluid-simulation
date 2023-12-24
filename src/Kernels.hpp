@@ -13,7 +13,8 @@ class Kernels {
 public:
     Kernels();
     
-    void calculateVolumesFromRadius(float radius);
+    void calculate2DVolumesFromRadius(float radius);
+    void calculate3DVolumesFromRadius(float radius);
     
     float smoothingKernelPoly6(float distance, float radius);
     float spikyKernelPow3(float distance, float radius);
