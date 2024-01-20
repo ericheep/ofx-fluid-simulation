@@ -9,54 +9,111 @@ Particle::Particle(ofVec3f _position, float _radius) {
     position = _position;
     predictedPosition = _position;
     radius = _radius;
-    lineWidth = 0;
-    lineWidthScalar = 1;
     lineThickness = 1;
     magnitude = 0;
-    maxMagnitude= 0;
-    theta = 0;
-    velocityHue = 0.0;
-    p1 = ofVec3f::zero();
-    p2 = ofVec3f::zero();
-    p3 = ofVec3f::zero();
-    p4 = ofVec3f::zero();
 
-    
+    mode = CIRCLE;
     velocity = ofVec3f::zero();
     nearDensity = 0.0;
     density = 0.0;
     particleColor = ofColor::black;
+    
+    minVelocity = 0.0;
+    maxVelocity = 1.0;
+    
+    minSize = 0.0;
+    maxSize = 100.0;
+}
+
+void Particle::setMode(int _mode) {
+    if (_mode == 0) {
+        mode = CIRCLE;
+    } else if (_mode == 1) {
+        mode = MESH;
+    } else if (_mode == 2) {
+        mode = LINE;
+    } else if (_mode == 3) {
+        mode = RECTANGLE;
+    } else if (_mode == 4) {
+        mode = TRAIL;
+    }
 }
 
 void Particle::update() {
-    magnitude = velocity.length();
-    theta = atan(velocity.y / velocity.x);
-    lineWidth = magnitude * lineWidthScalar + lineWidthMinimum;
-
-    xOffset = cos(theta) * lineWidth;
-    yOffset = sin(theta) * lineWidth;
+    setSmoothedVelocity();
+    setSizes();
     
-    float colorScalar = fmin(magnitude / velocityHue, 1.0);
-    particleColor = coolColor.getLerped(hotColor, colorScalar);
-    particleColor.setSaturation(175.0);
-    particleColor.a = 100;
-    setVertices();
+    switch (mode) {
+        case CIRCLE:
+            break;
+        case MESH:
+            setOffsets();
+            setVertices();
+            break;
+        case RECTANGLE:
+            setOffsets();
+            break;
+        case LINE:
+            setOffsets();
+            break;
+        case TRAIL:
+            setTrail();
+            break;
+    }
+}
+
+void Particle::setTrail() {
+    while (positions.size() < 10) {
+        positions.push_back(position);
+    }
+    
+    positions.erase(positions.begin(), positions.begin() + 1);
+}
+
+void Particle::setSizes() {
+    magnitude = smoothedVelocity.length();
+
+    // clip!
+    float clippedMagnitude = std::max(minVelocity, std::min(magnitude, maxVelocity));
+    float scaledMagnitude = ofMap(clippedMagnitude, minVelocity, maxVelocity, 0.0, 1.0);
+    float curvedMagnitude = pow(scaledMagnitude, velocityCurve);
+    
+    particleColor = coolColor.getLerped(hotColor, curvedMagnitude);
+    size = minSize + (maxSize - minSize) * curvedMagnitude;
+}
+
+void Particle::setOffsets() {
+    smoothedTheta = atan(smoothedVelocity.y / smoothedVelocity.x);
+    xOffset = cos(smoothedTheta) * size / 2.0;
+    yOffset = sin(smoothedTheta) * size / 2.0;
+    zOffset = 0;
+}
+
+void Particle:: setSmoothedVelocity() {
+    while (velocities.size() < 10) {
+        velocities.push_back(velocity);
+    }
+    
+    ofVec3f sumVelocity = ofVec3f::zero();
+    for (int i = 0; i < velocities.size(); i++) {
+        sumVelocity += velocities[i];
+    }
+    smoothedVelocity = sumVelocity / velocities.size();
+    velocities.erase(velocities.begin(), velocities.begin() + 1);
 }
 
 void Particle::setVertices() {
-    float xOffset = cos(theta) * lineWidth / 2.0;
-    float yOffset = sin(theta) * lineWidth / 2.0;
-    float zOffset = 0;
+    float yThickness = lineThickness / 2.0;
     
-    ofVec3f leftTopFront = ofVec3f(position.x + xOffset, position.y + yOffset, position.z - zOffset);
-    ofVec3f leftTopBack = ofVec3f(position.x + xOffset, position.y + yOffset, position.z + zOffset);
-    ofVec3f leftBottomFront = ofVec3f(position.x + xOffset, position.y - yOffset, position.z - zOffset);
-    ofVec3f leftBottomBack = ofVec3f(position.x + xOffset, position.y - yOffset, position.z + zOffset);
+    ofVec3f leftTopFront = ofVec3f(position.x + xOffset, position.y + yOffset + yThickness, position.z - zOffset);
+    ofVec3f leftTopBack = ofVec3f(position.x + xOffset, position.y + yOffset + yThickness, position.z + zOffset);
+    ofVec3f leftBottomFront = ofVec3f(position.x + xOffset, position.y + yOffset - yThickness, position.z - zOffset);
+    ofVec3f leftBottomBack = ofVec3f(position.x + xOffset, position.y + yOffset - yThickness, position.z + zOffset);
     
-    ofVec3f rightTopFront = ofVec3f(position.x - xOffset, position.y + yOffset, position.z - zOffset);
-    ofVec3f rightTopBack = ofVec3f(position.x - xOffset, position.y + yOffset, position.z + zOffset);
-    ofVec3f rightBottomFront = ofVec3f(position.x - xOffset, position.y - yOffset, position.z - zOffset);
-    ofVec3f rightBottomBack = ofVec3f(position.x - xOffset, position.y - yOffset, position.z + zOffset);
+    ofVec3f rightTopFront = ofVec3f(position.x - xOffset, position.y - yOffset + yThickness, position.z - zOffset);
+    ofVec3f rightTopBack = ofVec3f(position.x - xOffset, position.y - yOffset + yThickness, position.z + zOffset);
+    ofVec3f rightBottomFront = ofVec3f(position.x - xOffset, position.y - yOffset - yThickness, position.z - zOffset);
+    ofVec3f rightBottomBack = ofVec3f(position.x - xOffset, position.y - yOffset - yThickness, position.z + zOffset);
     
     mesh.clear();
     
@@ -117,9 +174,27 @@ void Particle::setVertices() {
 
 void Particle::draw() {
     ofSetColor(particleColor);
-    mesh.drawFaces();
-    // ofDrawLine(position.x - xOffset, position.y - yOffset, position.x + xOffset, position.y + yOffset);
     
+    switch (mode) {
+        case CIRCLE:
+            ofDrawCircle(position.x, position.y, size * 0.5);
+            break;
+        case MESH:
+            mesh.drawFaces();
+            break;
+        case RECTANGLE:
+            ofDrawRectangle(position.x - xOffset * 0.5, position.y - yOffset * 0.5, xOffset, yOffset);
+            break;
+        case LINE:
+            ofDrawLine(position.x - xOffset, position.y - yOffset, position.x + xOffset, position.y + yOffset);
+            break;
+        case TRAIL:
+            for (int i = 0; i < positions.size(); i++) {
+                ofDrawCircle(position.x, position.y, size * 0.5);
+            }
+            
+            break;
+    }
 }
 
 void Particle::setRadius(float _radius) {

@@ -7,29 +7,25 @@
 
 ParticleSystem::ParticleSystem() {
     radius = 10;
-    down = ofVec3f(0.0, 1.0, 0.0);
     predictionFactor = 1.0f / 120.0f;
     pressureMultiplier = 1.0;
     nearPressureMultiplier = 1.0;
     targetDensity = 1.0;
     viscosityStrength = 0.5;
-    gravity = 9.8; //meters per second
+    gravityConstant = 9.8; //meters per second
     gravityMultiplier = 1.0;
     collisionDamping = 0.26;
     pauseActive = false;
+    gravityForce = ofVec2f(1.0, 0.0);
+    
+    mesh.setMode(OF_PRIMITIVE_POINTS);
+    mesh.enableIndices();
+
 }
 
 void ParticleSystem::draw() {
-    if (exportFrameActive) ofBeginSaveScreenAsSVG("export.svg");
-    
-    ofFill();
     for (int i = 0; i < particles.size(); i++) {
         particles[i].draw();
-    }
-    
-    if (exportFrameActive) {
-        ofEndSaveScreenAsSVG();
-        exportFrameActive = false;
     }
 }
 
@@ -109,6 +105,8 @@ void ParticleSystem::setNumberParticles(int number) {
 }
 
 void ParticleSystem::setBoundsSize(ofVec3f _boundsSize) {
+    center.x = ofGetWidth() / 2.0;
+    center.y = ofGetHeight() / 2.0;
     boundsSize = _boundsSize;
     bounds.x = ofGetWidth() / 2.0 - boundsSize.x / 2.0;
     bounds.y = ofGetHeight() / 2.0  - boundsSize.y / 2.0;
@@ -128,6 +126,10 @@ void ParticleSystem::setRadius(float _radius) {
         kernels.calculate3DVolumesFromRadius(_radius);
         radius = _radius;
     }
+}
+
+void ParticleSystem::setGravityRotation(ofVec2f _gravityRotation) {
+    gravityForce = _gravityRotation * gravityMultiplier;
 }
 
 void ParticleSystem::setGravityMultiplier(float _gravityMultiplier) {
@@ -162,12 +164,6 @@ void ParticleSystem::setMouseRadius(int _mouseRadius) {
     mouseRadius = _mouseRadius;
 }
 
-void ParticleSystem::setVelocityHue(float _velocityHue) {
-    for (int i = 0; i < particles.size(); i++) {
-        particles[i].velocityHue = _velocityHue;
-    }
-}
-
 void ParticleSystem::setCoolColor(ofColor coolColor) {
     for (int i = 0; i < particles.size(); i++) {
         particles[i].coolColor = coolColor;
@@ -180,15 +176,15 @@ void ParticleSystem::setHotColor(ofColor hotColor) {
     }
 }
 
-void ParticleSystem::setLineWidthScalar(float lineWidthScalar) {
+void ParticleSystem::setMinVelocity(float minVelocity) {
     for (int i = 0; i < particles.size(); i++) {
-        particles[i].lineWidthScalar = lineWidthScalar;
+        particles[i].minVelocity = minVelocity;
     }
 }
 
-void ParticleSystem::setLineWidthMinimum(float lineWidthMinimum) {
+void ParticleSystem::setMaxVelocity(float maxVelocity) {
     for (int i = 0; i < particles.size(); i++) {
-        particles[i].lineWidthMinimum = lineWidthMinimum;
+        particles[i].maxVelocity = maxVelocity;
     }
 }
 
@@ -196,4 +192,37 @@ void ParticleSystem::setLineThickness(float lineThickness) {
     for (int i = 0; i < particles.size(); i++) {
         particles[i].lineThickness = lineThickness;
     }
+}
+
+void ParticleSystem::setVelocityCurve(float velocityCurve) {
+    for (int i = 0; i < particles.size(); i++) {
+        particles[i].velocityCurve = velocityCurve;
+    }
+}
+
+void ParticleSystem::setMinSize(float minSize) {
+    for (int i = 0; i < particles.size(); i++) {
+        particles[i].minSize = minSize;
+    }
+}
+
+void ParticleSystem::setMaxSize(float maxSize) {
+    for (int i = 0; i < particles.size(); i++) {
+        particles[i].maxSize = maxSize;
+    }
+}
+
+void ParticleSystem::setMode(int mode) {
+    for (int i = 0; i < particles.size(); i++) {
+        particles[i].setMode(mode);
+    }
+}
+
+void ParticleSystem::setCenter(float _centerX, float _centerY) {
+    centerX = _centerX;
+    centerY = _centerY;
+}
+
+void ParticleSystem::setCircleBoundary(Boolean _circleBoundaryActive) {
+    circleBoundaryActive = _circleBoundaryActive;
 }

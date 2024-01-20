@@ -12,13 +12,13 @@ FluidSystem2D::FluidSystem2D() {
         for (int j = -1; j < 2; j++) {
             cellOffsets.push_back(ofVec2f(i, j));
         }
-    }
+    }    
 }
 
 void FluidSystem2D::update() {
     if (!pauseActive || nextFrameActive) {
         tbb::parallel_for( tbb::blocked_range<int>(0, particles.size()), [&](tbb::blocked_range<int> r) {
-            for (int i = r.begin(); i < r.end(); i++) {
+            for (int i = r.begin(); i < r.end(); ++i) {
                 ofVec2f externalForce = calculateExternalForce(i);
                 particles[i].velocity += externalForce;
                 particles[i].predictedPosition = particles[i].position + particles[i].velocity * predictionFactor;
@@ -28,7 +28,7 @@ void FluidSystem2D::update() {
         updateSpatialLookup();
         
         tbb::parallel_for( tbb::blocked_range<int>(0, particles.size()), [&](tbb::blocked_range<int> r) {
-            for (int i = r.begin(); i < r.end(); i++) {
+            for (int i = r.begin(); i < r.end(); ++i) {
                 particles[i].indicesWithinRadius = foreachPointWithinRadius(i);
                 pair<float, float> densities = calculateDensity(i);
                 particles[i].density = densities.first;
@@ -37,7 +37,7 @@ void FluidSystem2D::update() {
         });
         
         tbb::parallel_for( tbb::blocked_range<int>(0, particles.size()), [&](tbb::blocked_range<int> r) {
-            for (int i = r.begin(); i < r.end(); i++) {
+            for (int i = r.begin(); i < r.end(); ++i) {
                 ofVec2f pressureForce = calculatePressureForce(i);
                 ofVec2f pressureAcceleration = pressureForce / particles[i].density;
                 particles[i].velocity += pressureAcceleration * deltaTime;
@@ -48,7 +48,7 @@ void FluidSystem2D::update() {
         });
         
         tbb::parallel_for( tbb::blocked_range<int>(0, particles.size()), [&](tbb::blocked_range<int> r) {
-            for (int i = r.begin(); i < r.end(); i++) {
+            for (int i = r.begin(); i < r.end(); ++i) {
                 particles[i].position += particles[i].velocity * deltaTime;
                 resolveCollisions(i);
             }
@@ -58,7 +58,7 @@ void FluidSystem2D::update() {
     }
 
     tbb::parallel_for( tbb::blocked_range<int>(0, particles.size()), [&](tbb::blocked_range<int> r) {
-        for (int i = r.begin(); i < r.end(); i++) {
+        for (int i = r.begin(); i < r.end(); ++i) {
             particles[i].update();
         }
     });
@@ -117,7 +117,7 @@ ofVec2f FluidSystem2D::calculateExternalForce(int particleIndex) {
         interactiveForce = calculateInteractiveForce(particleIndex);
     }
     
-    return interactiveForce + down * gravity * gravityMultiplier * deltaTime;
+    return interactiveForce + gravityForce * gravityConstant * gravityMultiplier * deltaTime;
 }
 
 pair<float, float> FluidSystem2D::calculateDensity(int particleIndex) {
@@ -127,7 +127,7 @@ pair<float, float> FluidSystem2D::calculateDensity(int particleIndex) {
     float density = 0.0f;
     float nearDensity = 0.0f;
     
-    for (int i = 0; i < indicesWithinRadius.size(); i++) {
+    for (int i = 0; i < indicesWithinRadius.size(); ++i) {
         int neighborParticleIndex = indicesWithinRadius[i];
         
         float distance = particlePosition.distance(particles[neighborParticleIndex].predictedPosition);
@@ -148,7 +148,7 @@ ofVec2f FluidSystem2D::calculatePressureForce(int particleIndex) {
     
     ofVec2f pressureForce = ofVec2f::zero();
     
-    for (int i = 0; i < indicesWithinRadius.size(); i++) {
+    for (int i = 0; i < indicesWithinRadius.size(); ++i) {
         int neighborParticleIndex = indicesWithinRadius[i];
         if (particleIndex == neighborParticleIndex) continue;
         
@@ -180,7 +180,7 @@ ofVec2f FluidSystem2D::calculateViscosityForce(int particleIndex) {
     ofVec2f particlePosition = particles[particleIndex].predictedPosition;
     ofVec2f viscosityForce = ofVec2f::zero();
     
-    for (int i = 0; i < indicesWithinRadius.size(); i++) {
+    for (int i = 0; i < indicesWithinRadius.size(); ++i) {
         int neighborParticleIndex = indicesWithinRadius[i];
         if (particleIndex == neighborParticleIndex) continue;
         
@@ -237,7 +237,7 @@ vector<int> FluidSystem2D::foreachPointWithinRadius(int particleIndex) {
 
 void FluidSystem2D::updateSpatialLookup() {
     tbb::parallel_for( tbb::blocked_range<int>(0, particles.size()), [&](tbb::blocked_range<int> r) {
-        for (int i = r.begin(); i < r.end(); i++) {
+        for (int i = r.begin(); i < r.end(); ++i) {
             pair<int, int> cell = positionToCellCoordinate(particles[i].position, radius);
             unsigned int cellKey = getKeyFromHash(hashCell(cell.first, cell.second));
             spatialLookup[i] = pair<int, unsigned int> (i, cellKey);
@@ -250,7 +250,7 @@ void FluidSystem2D::updateSpatialLookup() {
     });
     
     tbb::parallel_for( tbb::blocked_range<int>(0, particles.size()), [&](tbb::blocked_range<int> r) {
-        for (int i = r.begin(); i < r.end(); i++) {
+        for (int i = r.begin(); i < r.end(); ++i) {
             unsigned int key = spatialLookup[i].second;
             unsigned int keyPrev = i == 0 ? UINT_MAX : spatialLookup[i - 1].second;
             if (key != keyPrev) {
@@ -275,6 +275,26 @@ pair<int, int> FluidSystem2D::positionToCellCoordinate(ofVec2f position, float r
 }
 
 void FluidSystem2D::resolveCollisions(int particleIndex) {
+    if (circleBoundaryActive) {
+        float distance = particles[particleIndex].position.distance(center);
+        float maxDistance = 500;
+        
+        center.x = centerX;
+        center.y = centerY;
+        
+        if (distance > maxDistance) {
+            particles[particleIndex].velocity *= -1.0 * collisionDamping;
+            
+            ofVec2f point = particles[particleIndex].position - center;
+            float theta = atan2(point.y, point.x);
+            
+            ofVec2f edge = ofVec2f(cos(theta) * maxDistance, sin(theta) * maxDistance);
+            
+            particles[particleIndex].position = center + edge;
+        }
+    }
+
+    
     if (particles[particleIndex].position.x < xBounds.x) {
         particles[particleIndex].velocity.x *= -1.0 * collisionDamping;
         particles[particleIndex].position.x = xBounds.x;
@@ -295,12 +315,14 @@ void FluidSystem2D::resolveCollisions(int particleIndex) {
         particles[particleIndex].velocity.y *= -1.0 * collisionDamping;
         particles[particleIndex].position.y = yBounds.y;
     }
+     
+     
 }
 
 // reset particles
 
 void FluidSystem2D::resetRandom() {
-    for (int i = 0; i < particles.size(); i++) {
+    for (int i = 0; i < particles.size(); ++i) {
         float x = ofRandom(bounds.x, bounds.x + boundsSize.x);
         float y = ofRandom(bounds.y, bounds.y + boundsSize.y);
         particles[i].position = ofVec2f(x, y);

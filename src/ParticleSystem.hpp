@@ -16,16 +16,21 @@ public:
     
     vector<Particle> particles;
 
-    float radius, gravity, deltaTime, collisionDamping, predictionFactor, interactiveGravity;
+    float radius, gravityConstant, deltaTime, collisionDamping, predictionFactor, interactiveGravity;
     float targetDensity, nearPressureMultiplier, pressureMultiplier, gravityMultiplier, timeScalar, viscosityStrength;
     int mouseButton, mouseRadius;
     
-    ofVec3f down;
+    ofVboMesh mesh;
+    
+    float centerX, centerY;
+    ofVec2f gravityForce;
+    ofVec2f center;
     ofVec2f xBounds, yBounds, zBounds, mousePosition;
     ofVec3f boundsSize;
     ofVec3f bounds;
     Kernels kernels;
     Boolean mouseInputActive, pauseActive, nextFrameActive, exportFrameActive, SVG_MODE;
+    Boolean circleBoundaryActive;
 
     vector<pair<int, unsigned int>> spatialLookup;
     vector<int> startIndices;
@@ -34,6 +39,7 @@ public:
     void setDeltaTime(float deltaTime);
     void setRadius(float radius);
     void setGravityMultiplier(float gravityMultiplier);
+    void setGravityRotation(ofVec2f gravityRotation);
     void setTargetDensity(float targetDensity);
     void setPressureMultiplier(float pressureMultiplier);
     void setNearPressureMultiplier(float nearPressureMultiplier);
@@ -41,13 +47,20 @@ public:
     void setCollisionDamping(float collisionDamping);
     void setBoundsSize(ofVec3f bounds);
     void setMouseRadius(int mouseRadius);
-    void setLineWidthScalar(float lineWidthMax);
-    void setLineWidthMinimum(float lineWidthMinimum);
+    void setMinVelocity(float minVelocity);
+    void setMaxVelocity(float maxVelocity);
+    void setMinSize(float minSize);
+    void setMaxSize(float maxSize);
+    void setVelocityCurve(float velocityCurve);
     void setLineThickness(float lineThickness);
     void setVelocityHue(float hue);
     void setHotColor(ofColor hotColor);
     void setCoolColor(ofColor coolColor);
     void setNumberParticles(int number);
+    void setLineCurve(float lineCurve);
+    void setCenter(float centerX, float centerY);
+    void setMode(int mode);
+    void setCircleBoundary(Boolean circleBoundaryActive);
     
     // creation functions
     void addParticle();

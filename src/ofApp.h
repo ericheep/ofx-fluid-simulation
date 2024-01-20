@@ -27,23 +27,28 @@ private:
     ofEasyCam cam;
     
     ofxOscReceiver oscReceiver;
+    ofShader bloom;
+    ofFbo svgFbo;
     
     ofxPanel gui;
-    ofxIntSlider numberParticles;
+    ofxIntSlider numberParticles, drawMode;
     ofxFloatSlider particleSize, collisionDamping, resetScale;
-    ofxFloatSlider targetDensity, nearPressureMultiplier, pressureMultiplier, gravityMultiplier, timeScalar, viscosityStrength, lineWidthScalar, velocityHue, lineWidthMinimum;
+    ofxFloatSlider targetDensity, nearPressureMultiplier, pressureMultiplier, gravityMultiplier, timeScalar, viscosityStrength;
+    ofxFloatSlider velocityHue, bloomSpread, bloomIntensity, lineThickness, coolHue, hotHue, saturation, minVelocity, maxVelocity, velocityCurve, minSize, maxSize;
+    ofxFloatSlider centerX, centerY, gravityRotationIncrement, borderOffset;
     ofxIntSlider mouseRadius;
     ofxIntSlider boundsWidth, boundsHeight, boundsDepth;
     ofxButton resetRandomButton, resetGridButton, resetCircleButton;
+    ofxToggle circleBoundary;
     ofColor backgroundColor, hotColor, coolColor;
+    ofVec2f gravityRotation;
     
     Boolean simulateActive;
     
-    enum MODES { MODE_SVG, MODE_2D, MODE_3D } mode;
+    enum MODES { MODE_SVG, MODE_OTHER } mode;
     float width, height, depth;
     
     Boolean pauseActive;
-    Boolean SVG_MODE;
     
     float widthRatio, heightRatio;
     
@@ -54,4 +59,6 @@ private:
     void resetRandom();
     void resetGrid();
     void resetCircle();
+    
+    void updateGuiParameters();
 };
