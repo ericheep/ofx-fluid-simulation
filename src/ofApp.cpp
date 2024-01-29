@@ -6,8 +6,10 @@ void ofApp::setup(){
 
     // systemWidth = 1920;
     // systemHeight = 1200;
-    systemWidth = 1080;
-    systemHeight = 1920;
+    // systemWidth = 1080;
+    // systemHeight = 1920;
+    systemWidth = ofGetWidth();
+    systemHeight = ofGetHeight();
 
     systemFbo.allocate(systemWidth, systemHeight);
     individualTextureSyphonServer.setName("fbo texture output");

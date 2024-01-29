@@ -272,9 +272,11 @@ void ParticleSystem::setMode(int _drawModeInt) {
         shapeResolution = rectangleResolution;
         initializeMesh(particles.size(), shapeResolution);
     } else if (_drawModeInt == 2) {
-        drawMode = LINES;
+        drawMode = VECTORS;
+        shapeResolution = rectangleResolution;
+        initializeMesh(particles.size(), shapeResolution);
     } else if (_drawModeInt == 3) {
-        drawMode = SVG;
+        drawMode = LINES;
     }
     
     for (int i = 0; i < particles.size(); i++) {

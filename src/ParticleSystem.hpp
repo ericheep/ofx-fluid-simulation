@@ -21,7 +21,7 @@ public:
     float targetDensity, nearPressureMultiplier, pressureMultiplier, gravityMultiplier, timeScalar, viscosityStrength;
     int mouseButton, mouseRadius;
 
-    enum drawModes { CIRCLES, RECTANGLES, LINES, SVG } drawMode;
+    enum drawModes { CIRCLES, RECTANGLES, VECTORS, LINES } drawMode;
     int circleResolution, rectangleResolution, shapeResolution;
     
     ofMesh mesh;

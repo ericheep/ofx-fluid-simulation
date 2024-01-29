@@ -31,7 +31,8 @@ Particle::Particle(ofVec3f _position, float _radius) {
     lerpedTheta = 0.0;
     
     calculateNormalizedCircleMesh(circleResolution);
-    calculateNormalizedRectangleMesh(rectangleResolution);
+    calculateNormalizedRectangleMesh();
+    calculateNormalizedVectorMesh();
     
     shapeMode = CIRCLE;
 }
@@ -42,9 +43,9 @@ void Particle::setMode(int _mode) {
     } else if (_mode == 1) {
         shapeMode = RECTANGLE;
     } else if (_mode == 2) {
-        shapeMode = LINE;
+        shapeMode = VECTOR;
     } else if (_mode == 3) {
-        shapeMode = MESH;
+        shapeMode = LINE;
     }
 }
 
@@ -61,7 +62,7 @@ void Particle::calculateNormalizedCircleMesh(int circleResolution) {
     }
 }
 
-void Particle::calculateNormalizedRectangleMesh(int rectangleResolution) {
+void Particle::calculateNormalizedRectangleMesh() {
     rectangleMesh.clear();
     normalizedRectangleMesh.clear();
 
@@ -77,6 +78,16 @@ void Particle::calculateNormalizedRectangleMesh(int rectangleResolution) {
     normalizedRectangleMesh.addVertex(ofVec3f(-1, -1, 0));
 }
 
+void Particle::calculateNormalizedVectorMesh() {
+    vectorMesh.clear();
+
+    // cornver vertices
+    vectorMesh.addVertex(ofVec3f(-1, 1, 0));
+    vectorMesh.addVertex(ofVec3f(1, 1, 0));
+    vectorMesh.addVertex(ofVec3f(1, -1, 0));
+    vectorMesh.addVertex(ofVec3f(-1, -1, 0));
+}
+
 void Particle::updateCircleMesh() {
     for (int i = 0; i < circleMesh.getNumVertices(); i++) {
         circleMesh.setVertex(i, normalizedCircleMesh.getVertex(i) * size);
@@ -89,10 +100,22 @@ void Particle::updateRectangleMesh() {
     ofVec3f bottomRightOffset = ofVec3f(xOffset, -yOffset, 0);
     ofVec3f bottomLeftOffset = ofVec3f(-xOffset, -yOffset, 0);
 
-    rectangleMesh.setVertex(0, normalizedCircleMesh.getVertex(0) + topLeftOffset);
-    rectangleMesh.setVertex(1, normalizedCircleMesh.getVertex(1) + topRightOffset);
-    rectangleMesh.setVertex(2, normalizedCircleMesh.getVertex(2) + bottomRightOffset);
-    rectangleMesh.setVertex(3, normalizedCircleMesh.getVertex(3) + bottomLeftOffset);
+    rectangleMesh.setVertex(0, normalizedRectangleMesh.getVertex(0) + topLeftOffset);
+    rectangleMesh.setVertex(1, normalizedRectangleMesh.getVertex(1) + topRightOffset);
+    rectangleMesh.setVertex(2, normalizedRectangleMesh.getVertex(2) + bottomRightOffset);
+    rectangleMesh.setVertex(3, normalizedRectangleMesh.getVertex(3) + bottomLeftOffset);
+}
+
+void Particle::updateVectorMesh() {
+    ofVec3f topLeftOffset = ofVec3f(xOffset, yOffset + lineThickness, zOffset);
+    ofVec3f topRightOffset = ofVec3f(-xOffset, -yOffset + lineThickness, zOffset);
+    ofVec3f bottomLeftOffset = ofVec3f(xOffset, yOffset - lineThickness, zOffset);
+    ofVec3f bottomRightOffset = ofVec3f(-xOffset, -yOffset - lineThickness, zOffset);
+    
+    vectorMesh.setVertex(0, normalizedRectangleMesh.getVertex(0) + topLeftOffset);
+    vectorMesh.setVertex(1, normalizedRectangleMesh.getVertex(1) + topRightOffset);
+    vectorMesh.setVertex(2, normalizedRectangleMesh.getVertex(2) + bottomRightOffset);
+    vectorMesh.setVertex(3, normalizedRectangleMesh.getVertex(3) + bottomLeftOffset);
 }
 
 ofMesh Particle::getShapeMesh() {
@@ -103,10 +126,10 @@ ofMesh Particle::getShapeMesh() {
         case RECTANGLE:
             return rectangleMesh;
             break;
-        case LINE:
-            return rectangleMesh;
+        case VECTOR:
+            return vectorMesh;
             break;
-        case MESH:
+        case LINE:
             return rectangleMesh;
             break;
     }
@@ -123,10 +146,11 @@ void Particle::update() {
             setOffsets();
             updateRectangleMesh();
             break;
-        case LINE:
+        case VECTOR:
             setOffsets();
+            updateVectorMesh();
             break;
-        case MESH:
+        case LINE:
             setOffsets();
             // setVertices();
             updateRectangleMesh();

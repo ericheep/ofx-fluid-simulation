@@ -30,13 +30,13 @@ public:
     ofVec3f position, velocity, predictedPosition;
     ofColor particleColor, coolColor, hotColor;
     
-    ofMesh circleMesh, rectangleMesh, shapeMesh;
+    ofMesh circleMesh, rectangleMesh, vectorMesh, shapeMesh;
     ofMesh normalizedCircleMesh, normalizedRectangleMesh;
     
     // drawn mesh
     ofMesh mesh;
     
-    enum shapeModes { CIRCLE, RECTANGLE, LINE, MESH } shapeMode;
+    enum shapeModes { CIRCLE, RECTANGLE, VECTOR, LINE } shapeMode;
 
     vector <int> indicesWithinRadius;
     
@@ -50,9 +50,11 @@ public:
     void setOffsets();
     void draw();
     void calculateNormalizedCircleMesh(int circleResolution);
-    void calculateNormalizedRectangleMesh(int rectangleResolution);
+    void calculateNormalizedRectangleMesh();
+    void calculateNormalizedVectorMesh();
     void updateCircleMesh();
     void updateRectangleMesh();
+    void updateVectorMesh();
     
     void setRadius(float radius);
 private:
