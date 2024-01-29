@@ -11,27 +11,36 @@
 
 class Particle {
 public:
+    Particle(ofVec3f position, float radius);
+
     // member variables for fluid calculations
     float radius, density, nearDensity;
     
+    // gui parameters
     float lineThickness, lineLength;
-    float magnitude, smoothedTheta, minVelocity, maxVelocity;
-    float velocityCurve;
-    float xOffset, yOffset, zOffset;
+    float minVelocity, maxVelocity, velocityCurve;
     float minSize, maxSize, size;
-    ofVec3f position, velocity, predictedPosition, smoothedVelocity;
-    vector <ofVec3f> velocities, positions;
+
+    // drawing variables
+    float magnitude, lerpedMagnitude;
+    float theta, lerpedTheta;
+    float xOffset, yOffset, zOffset;
+    int circleResolution, rectangleResolution;
+    
+    ofVec3f position, velocity, predictedPosition;
     ofColor particleColor, coolColor, hotColor;
     
-    ofMesh mesh;
-    ofPath poly;
+    ofMesh circleMesh, rectangleMesh, shapeMesh;
+    ofMesh normalizedCircleMesh, normalizedRectangleMesh;
     
-    enum MODE { CIRCLE, MESH, LINE, RECTANGLE, TRAIL } mode;
+    // drawn mesh
+    ofMesh mesh;
+    
+    enum shapeModes { CIRCLE, RECTANGLE, LINE, MESH } shapeMode;
 
     vector <int> indicesWithinRadius;
     
-    Particle(ofVec3f position, float radius);
-    
+    ofMesh getShapeMesh();
     void update();
     void setMode(int mode);
     void setTrail();
@@ -40,6 +49,10 @@ public:
     void setSmoothedVelocity();
     void setOffsets();
     void draw();
+    void calculateNormalizedCircleMesh(int circleResolution);
+    void calculateNormalizedRectangleMesh(int rectangleResolution);
+    void updateCircleMesh();
+    void updateRectangleMesh();
     
     void setRadius(float radius);
 private:

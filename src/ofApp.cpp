@@ -2,11 +2,17 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-    mode = MODE_SVG;
-    // ofSetBackgroundAuto(false);
+    // mode = MODE_OTHER;
 
+    // systemWidth = 1920;
+    // systemHeight = 1200;
+    systemWidth = 1080;
+    systemHeight = 1920;
+
+    systemFbo.allocate(systemWidth, systemHeight);
+    individualTextureSyphonServer.setName("fbo texture output");
+    
     bloom.load("shaders/bloom");
-    svgFbo.allocate(ofGetWidth(), ofGetHeight());
     oscReceiver.setup(RECEIVING_PORT);
     
     ofxGuiSetFont("DankMono-Bold.ttf", 10);
@@ -14,23 +20,24 @@ void ofApp::setup(){
     gui.setup("fluid simulation");
     gui.setSize(170, 170);
     gui.setDefaultHeight(12);
-    gui.add(numberParticles.setup("number", 5000, 50, 50000));
-    gui.add(drawMode.setup("draw mode", 0, 0, 4));
-    gui.add(particleSize.setup("particle size", 30.0, 0.5, 100.0));
-    gui.add(timeScalar.setup("time scalar", 1.0, 0.01, 10.0));
+    gui.add(numberParticles.setup("number", 10000, 50, 20000));
+    
+    gui.add(drawMode.setup("draw mode", 0, 0, 3));
+    gui.add(particleSize.setup("particle size", 15.0, 0.5, 50.0));
+    gui.add(timeScalar.setup("time scalar", 1.0, 0.5, 4.0));
 
-    gui.add(circleBoundary.setup("circle boundary", false));
-    gui.add(boundsWidth.setup("width", ofGetWidth(), 50, ofGetWidth()));
-    gui.add(boundsHeight.setup("height", ofGetHeight(), 50, ofGetHeight()));
+    gui.add(circleBoundary.setup("circle boundary", true));
+    gui.add(boundsWidth.setup("width", systemWidth, 50, systemWidth));
+    gui.add(boundsHeight.setup("height", systemHeight, 50, systemHeight));
     gui.add(borderOffset.setup("offset", 0.0, 0.0, 50.0));
 
     // gui.add(boundsDepth.setup("depth", ofGetWidth(), 50, ofGetWidth()));
 
-    gui.add(gravityMultiplier.setup("gravity multiplier", 0.0, 0.0, 15.0));
-    gui.add(gravityRotationIncrement.setup("gravity rotation inc", 0.0, 0.0, 1.00));
-    gui.add(targetDensity.setup("target density", 1.0, 0.1, 2.0));
-    gui.add(pressureMultiplier.setup("pressure multiplier", 50, 0, 1000.0));
-    gui.add(nearPressureMultiplier.setup("near pressure multiplier", 25, 0.0, 1000.0));
+    gui.add(gravityMultiplier.setup("gravity multiplier", 1.0, 0.0, 5.0));
+    gui.add(gravityRotationIncrement.setup("gravity rotation inc", 1.0, 0.0, 5.0));
+    gui.add(targetDensity.setup("target density", 2.0, 0.25, 3.0));
+    gui.add(pressureMultiplier.setup("pressure multiplier", 500, 0, 1000.0));
+    gui.add(nearPressureMultiplier.setup("near pressure multiplier", 100, 0.0, 1000.0));
     gui.add(viscosityStrength.setup("viscosity strength", 0.25, 0.0, 1.0));
     gui.add(collisionDamping.setup("collision damping", 0.05, 0.1, 1.5));
 
@@ -41,60 +48,60 @@ void ofApp::setup(){
     
     resetGridButton.addListener(this, &ofApp::resetGrid);
     gui.add(resetGridButton.setup("reset grid", 20, 12));
-    
+        
     resetCircleButton.addListener(this, &ofApp::resetCircle);
     gui.add(resetCircleButton.setup("reset circle", 20, 12));
-    
-    gui.add(mouseRadius.setup("mouse radius", 150, 10, 500));
+    gui.add(mouseRadius.setup("mouse radius", 250, 10, 500));
+    gui.add(mouseForce.setup("mouse force", 50.0, 1., 100.));
     gui.add(velocityCurve.setup("velocity curve", 1.0, 0.0, 3.0));
     gui.add(minVelocity.setup("min velocity", 0.0, 0.0, 100.0));
-    gui.add(maxVelocity.setup("max velocity", 100.0, 0.0, 100.0));
-    gui.add(minSize.setup("min size", 1.0, 0.0, 50.0));
-    gui.add(maxSize.setup("max size", 10.0, 0.0, 150.0));
-    // gui.add(bloomSpread.setup("bloom spread", 0.7, 0.0, 5.0));
-    // gui.add(bloomIntensity.setup("bloom intensity", 1.1, 0.0, 5.0));
+    gui.add(maxVelocity.setup("max velocity", 50.0, 0.0, 250.0));
+    gui.add(minSize.setup("min size", 0.0, 0.0, 50.0));
+    gui.add(maxSize.setup("max size", 8.0, 0.0, 50.0));
     gui.add(lineThickness.setup("line thickness", 1.0, 0.1, 15.0));
-    gui.add(coolHue.setup("cool hue", 0.0, 0.0, 255.0));
-    gui.add(hotHue.setup("hot hue", 100.0, 0.0, 255.0));
-    gui.add(saturation.setup("saturation", 200.0, 0.0, 255.0));
-    
-    gui.add(centerX.setup("center X", ofGetWidth() / 2.0, 0.0, ofGetWidth()));
-    gui.add(centerY.setup("center Y", ofGetHeight() / 2.0, 0.0, ofGetHeight()));
+    gui.add(coolHue.setup("cool hue", 120.0, 0.0, 255.0));
+    gui.add(hotHue.setup("hot hue", 255.0, 0.0, 255.0));
+    gui.add(saturation.setup("saturation", 60.0, 0.0, 255.0));
+    gui.add(centerX.setup("center X", systemWidth / 2.0, 0.0, systemWidth));
+    gui.add(centerY.setup("center Y", systemHeight / 2.0, 0.0, systemHeight));
 
     cam.setupPerspective();
     
     ofSetFrameRate(60);
+    fluidSystem.setWidth(systemWidth);
+    fluidSystem.setHeight(systemHeight);
     fluidSystem.setDeltaTime(1.0 / 60.0);
     fluidSystem.setBoundsSize(ofVec3f(boundsWidth, boundsHeight, boundsDepth));
     fluidSystem.setNumberParticles(numberParticles);
-    fluidSystem.setMode(mode);
-    fluidSystem.resetRandom();
+    fluidSystem.setMode(0);
+    fluidSystem.resetCircle(0.8);
     
     simulateActive = true;
-    timeScalar = 1.0;
-    
     gravityRotation = ofVec2f(1.0, 0.0);
-    
+
+    backgroundColor = ofColor::black;
+
     updateGuiParameters();
     
-    switch (mode) {
+    /*switch (mode) {
         case MODE_SVG:
             backgroundColor = ofColor::white;
             break;
         case MODE_OTHER:
             backgroundColor = ofColor::black;
             break;
-    }
+    }*/
 }
 
 //--------------------------------------------------------------
 void ofApp::update() {
     checkIncomingOsc();
+    updateMode();
     
     coolColor.setHsb(coolHue, saturation, 255.0);
     hotColor.setHsb(hotHue, saturation, 255.0);
 
-    switch (mode) {
+    /* switch (mode) {
         case MODE_SVG:
             fluidSystem.setCoolColor(ofColor::black);
             fluidSystem.setHotColor(ofColor::black);
@@ -103,8 +110,9 @@ void ofApp::update() {
             fluidSystem.setCoolColor(coolColor);
             fluidSystem.setHotColor(hotColor);
             break;
-    }
-    
+    }*/
+    fluidSystem.setCoolColor(coolColor);
+    fluidSystem.setHotColor(hotColor);
     widthRatio = boundsWidth / float(ofGetWidth());
     heightRatio = boundsHeight / float(ofGetHeight());
     
@@ -118,8 +126,10 @@ void ofApp::update() {
 
 //--------------------------------------------------------------
 void ofApp::draw(){
- 
-    svgFbo.begin();
+    
+    systemFbo.begin();
+    // ofClear(0.0f, 0.0f, 0.0f, 0.0f);
+    
     if (fluidSystem.exportFrameActive) {
         string filename = to_string(numberParticles) + "-" + ofGetTimestampString("%F") + ".svg";
         ofBeginSaveScreenAsSVG(filename);
@@ -127,27 +137,18 @@ void ofApp::draw(){
         ofBackground(backgroundColor);
     }
     
-    // draw
+    // draw mesh
     fluidSystem.draw();
     
     if (fluidSystem.exportFrameActive) {
         ofEndSaveScreenAsSVG();
         fluidSystem.exportFrameActive = false;
     }
-    svgFbo.end();
     
+    systemFbo.end();
+    systemFbo.draw(0, 0, ofGetWidth(), ofGetHeight());
 
-    svgFbo.draw(0, 0);
-    
-  
-    
-    // bloomFbo.end();
-    
-    // bloom.begin();
-    // bloom.setUniform1f("bloom_spread", bloomSpread);
-    // bloom.setUniform1f("bloom_intensity", bloomIntensity);
-    // bloomFbo.draw(0, 0);
-    // bloom.end();
+    individualTextureSyphonServer.publishTexture(&systemFbo.getTexture());
     
     gui.draw();
     std::stringstream strm;
@@ -173,8 +174,8 @@ void ofApp::checkIncomingOsc() {
         oscReceiver.getNextMessage(m);
         
         if (m.getAddress() == "/simulateMouse") {
-            float x = ofMap(m.getArgAsFloat(0), -1.0, 1.0, 0, ofGetWidth());
-            float y = ofMap(m.getArgAsFloat(1), -1.0, 1.0, 0, ofGetHeight());
+            float x = ofMap(m.getArgAsFloat(0), -1.0, 1.0, 0, systemWidth);
+            float y = ofMap(m.getArgAsFloat(1), -1.0, 1.0, 0, systemHeight);
             
             fluidSystem.mouseInput(x, y, 0, simulateActive);
         }
@@ -226,32 +227,53 @@ void ofApp::updateGuiParameters() {
     fluidSystem.setRadius(particleSize / 2.0);
     fluidSystem.setBoundsSize(ofVec3f(boundsWidth - borderOffset, boundsHeight - borderOffset, boundsDepth));
     fluidSystem.setMouseRadius(mouseRadius);
+    fluidSystem.setMouseForce(mouseForce);
     fluidSystem.setMinVelocity(minVelocity);
     fluidSystem.setMaxVelocity(maxVelocity);
     fluidSystem.setMinSize(minSize);
     fluidSystem.setMaxSize(maxSize);
     fluidSystem.setVelocityCurve(velocityCurve);
     fluidSystem.setLineThickness(lineThickness);
-    fluidSystem.setMode(drawMode);
     fluidSystem.setCenter(centerX, centerY);
     fluidSystem.setCircleBoundary(circleBoundary);
 }
 
 void ofApp::mouseDragged(int x, int y, int button) {
-    fluidSystem.mouseInput(x, y);
+    float scaledX = ofMap(x, 0, ofGetWidth(), 0, systemWidth);
+    float scaledY = ofMap(y, 0, ofGetHeight(), 0, systemHeight);
+
+    fluidSystem.mouseInput(scaledX, scaledY);
 }
 
 void ofApp::mousePressed(int x, int y, int button) {
-    fluidSystem.mouseInput(x, y, button, true);
+    float scaledX = ofMap(x, 0, ofGetWidth(), 0, systemWidth);
+    float scaledY = ofMap(y, 0, ofGetHeight(), 0, systemHeight);
+    
+    fluidSystem.mouseInput(scaledX, scaledY, button, true);
 }
 
 void ofApp::mouseReleased(int x, int y, int button) {
-    fluidSystem.mouseInput(x, y, button, false);
+    float scaledX = ofMap(x, 0, ofGetWidth(), 0, systemWidth);
+    float scaledY = ofMap(y, 0, ofGetHeight(), 0, systemHeight);
+    
+    fluidSystem.mouseInput(scaledX, scaledY, button, false);
 }
 
 void ofApp::windowResized(int w, int h) {
     boundsWidth = widthRatio * w;
     boundsHeight = heightRatio * h;
+}
+
+void ofApp::updateMode() {
+    // 0 = circles
+    // 1 = rectangles
+    // 2 = lines
+    // 3 = svg
+    
+    if (previousDrawMode != drawMode) {
+        fluidSystem.setMode(drawMode);
+        previousDrawMode = drawMode;
+    }
 }
 
 void ofApp::exit(){

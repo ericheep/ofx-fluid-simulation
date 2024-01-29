@@ -17,16 +17,70 @@ ParticleSystem::ParticleSystem() {
     collisionDamping = 0.26;
     pauseActive = false;
     gravityForce = ofVec2f(1.0, 0.0);
+    mouseForce = 1.0;
     
-    mesh.setMode(OF_PRIMITIVE_POINTS);
-    mesh.enableIndices();
+    circleResolution = 22;
+    rectangleResolution = 4;
+    
+    shapeResolution = circleResolution;
 
+    systemWidth = ofGetWidth();
+    systemHeight = ofGetHeight();
+    
+    mesh.setMode(OF_PRIMITIVE_TRIANGLES);
+}
+
+void ParticleSystem::setWidth(int _systemWidth) {
+    systemWidth = _systemWidth;
+}
+
+void ParticleSystem::setHeight(int _systemHeight) {
+    systemHeight = _systemHeight;
+}
+
+void ParticleSystem::updateFace(int particleIndex) {
+    ofMesh shapeMesh = particles[particleIndex].getShapeMesh();
+    int meshIndex = (shapeResolution + 1) * particleIndex;
+    
+    mesh.setVertex(meshIndex, particles[particleIndex].position);
+    mesh.setColor(meshIndex, particles[particleIndex].particleColor);
+    
+    for (int j = 0; j < shapeResolution; j++) {
+        mesh.setVertex(meshIndex + j + 1, shapeMesh.getVertex(j) + particles[particleIndex].position);
+        mesh.setColor(meshIndex + j + 1, particles[particleIndex].particleColor);
+    }
+}
+
+void ParticleSystem::initializeMesh(int numParticles, int shapeResolution) {
+    mesh.clear();
+    
+    for (int i = 0; i < numParticles; i++) {
+        mesh.addVertex(ofVec3f(0, 0, 0));
+        mesh.addColor(ofColor::black);
+        for (int j = 0; j < shapeResolution; j++) {
+            mesh.addVertex(ofVec3f(0, 0, 0));
+            mesh.addColor(ofColor::black);
+        }
+    }
+    
+    for (int i = 0; i < numParticles; i++) {
+        int particleIndex = (shapeResolution + 1) * i;
+        
+        for (int j = 0; j < shapeResolution; j++) {
+            mesh.addIndex(particleIndex);
+            mesh.addIndex(particleIndex + j + 1);
+            
+            if (j < shapeResolution - 1) {
+                mesh.addIndex(particleIndex + j + 2);
+            } else {
+                mesh.addIndex(particleIndex + 1);
+            }
+        }
+    }
 }
 
 void ParticleSystem::draw() {
-    for (int i = 0; i < particles.size(); i++) {
-        particles[i].draw();
-    }
+    mesh.draw();
 }
 
 // create particles
@@ -35,13 +89,7 @@ void ParticleSystem::addParticle() {
     float x = ofRandom(bounds.x, bounds.x + boundsSize.x);
     float y = ofRandom(bounds.y, bounds.y + boundsSize.y);
     float z = ofRandom(bounds.z, bounds.z + boundsSize.z);
-    addParticle(ofVec3f(x, y, z));
-}
-
-void ParticleSystem::addParticle(ofVec3f position) {
-    particles.push_back(Particle(position, radius));
-    spatialLookup.resize(particles.size());
-    startIndices.resize(particles.size());
+    particles.push_back(Particle(ofVec3f(x, y, z), 1.0));
 }
 
 ofVec2f ParticleSystem::getRandom2DDirection() {
@@ -55,7 +103,7 @@ ofVec3f ParticleSystem::getRandom3DDirection() {
     float rX = ofRandom(0, TWO_PI);
     float rY = ofRandom(0, TWO_PI);
     float rZ = ofRandom(0, TWO_PI);
-
+    
     ofVec3f randomDirection = unitVector.rotateRad(rX, rY, rZ);
     
     return randomDirection;
@@ -94,6 +142,7 @@ void ParticleSystem::setNumberParticles(int number) {
         }
         spatialLookup.resize(particles.size());
         startIndices.resize(particles.size());
+        initializeMesh(particles.size(), shapeResolution);
     }
     if (number < particles.size()) {
         while (particles.size() > number) {
@@ -101,29 +150,30 @@ void ParticleSystem::setNumberParticles(int number) {
         }
         spatialLookup.resize(particles.size());
         startIndices.resize(particles.size());
+        initializeMesh(particles.size(), shapeResolution);
     }
 }
 
 void ParticleSystem::setBoundsSize(ofVec3f _boundsSize) {
-    center.x = ofGetWidth() / 2.0;
-    center.y = ofGetHeight() / 2.0;
+    center.x = systemWidth / 2.0;
+    center.y = systemHeight / 2.0;
     boundsSize = _boundsSize;
-    bounds.x = ofGetWidth() / 2.0 - boundsSize.x / 2.0;
-    bounds.y = ofGetHeight() / 2.0  - boundsSize.y / 2.0;
-    bounds.z = ofGetWidth() / 2.0  - boundsSize.z / 2.0;
+    bounds.x = center.x - boundsSize.x / 2.0;
+    bounds.y = center.y  - boundsSize.y / 2.0;
+    bounds.z = center.x - boundsSize.z / 2.0;
     
+    xBounds = ofVec2f(bounds.x, bounds.x + boundsSize.x);
     xBounds = ofVec2f(bounds.x, bounds.x + boundsSize.x);
     yBounds = ofVec2f(bounds.y, bounds.y + boundsSize.y);
     zBounds = ofVec2f(bounds.z, bounds.z + boundsSize.z);
 }
 
 void ParticleSystem::setRadius(float _radius) {
-    for (int i = 0; i < particles.size(); i++) {
-        particles[i].setRadius(_radius);
-    }
-    
     if (radius != _radius) {
-        kernels.calculate3DVolumesFromRadius(_radius);
+        for (int i = 0; i < particles.size(); i++) {
+            particles[i].setRadius(_radius);
+        }
+        kernels.calculate2DVolumesFromRadius(_radius);
         radius = _radius;
     }
 }
@@ -212,9 +262,23 @@ void ParticleSystem::setMaxSize(float maxSize) {
     }
 }
 
-void ParticleSystem::setMode(int mode) {
+void ParticleSystem::setMode(int _drawModeInt) {
+    if (_drawModeInt == 0) {
+        drawMode = CIRCLES;
+        shapeResolution = circleResolution;
+        initializeMesh(particles.size(), shapeResolution);
+    } else if (_drawModeInt == 1) {
+        drawMode = RECTANGLES;
+        shapeResolution = rectangleResolution;
+        initializeMesh(particles.size(), shapeResolution);
+    } else if (_drawModeInt == 2) {
+        drawMode = LINES;
+    } else if (_drawModeInt == 3) {
+        drawMode = SVG;
+    }
+    
     for (int i = 0; i < particles.size(); i++) {
-        particles[i].setMode(mode);
+        particles[i].setMode(_drawModeInt);
     }
 }
 
@@ -225,4 +289,8 @@ void ParticleSystem::setCenter(float _centerX, float _centerY) {
 
 void ParticleSystem::setCircleBoundary(Boolean _circleBoundaryActive) {
     circleBoundaryActive = _circleBoundaryActive;
+}
+
+void ParticleSystem::setMouseForce(float _mouseForce) {
+    mouseForce = _mouseForce;
 }

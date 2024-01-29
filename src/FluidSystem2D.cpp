@@ -60,6 +60,7 @@ void FluidSystem2D::update() {
     tbb::parallel_for( tbb::blocked_range<int>(0, particles.size()), [&](tbb::blocked_range<int> r) {
         for (int i = r.begin(); i < r.end(); ++i) {
             particles[i].update();
+            updateFace(i);
         }
     });
 }
@@ -89,7 +90,7 @@ ofVec2f FluidSystem2D::pullParticlesToPoint(ofVec2f pointA, ofVec2f pointB) {
         ofVec2f direction = (pointA - pointB) / distance;
         float scalarProximity = 1.0 - distance / inputRadius;
         
-        interactiveForce =  direction * 15.0f * scalarProximity;
+        interactiveForce =  direction * mouseForce * scalarProximity;
     }
     return interactiveForce;
 }
@@ -105,7 +106,7 @@ ofVec2f FluidSystem2D::pushParticlesAwayFromPoint(ofVec2f pointA, ofVec2f pointB
         ofVec2f direction = (pointB - pointA) / distance;
         float scalarProximity = 1.0 - distance / inputRadius;
         
-        interactiveForce =  direction * 50.0f * scalarProximity * scalarProximity;
+        interactiveForce =  direction * mouseForce * scalarProximity * scalarProximity;
     }
     return interactiveForce;
 }
@@ -277,7 +278,7 @@ pair<int, int> FluidSystem2D::positionToCellCoordinate(ofVec2f position, float r
 void FluidSystem2D::resolveCollisions(int particleIndex) {
     if (circleBoundaryActive) {
         float distance = particles[particleIndex].position.distance(center);
-        float maxDistance = 500;
+        float maxDistance = 455;
         
         center.x = centerX;
         center.y = centerY;
@@ -337,8 +338,8 @@ void FluidSystem2D::resetGrid(float scale) {
     float width = boundsSize.x;
     float height = boundsSize.y;
     
-    float xOffset = ofGetWidth() / 2.0 - width / 2.0 * scale;
-    float yOffset = ofGetHeight() / 2.0 - height / 2.0 * scale;
+    float xOffset = systemWidth / 2.0 - width / 2.0 * scale;
+    float yOffset = systemHeight / 2.0 - height / 2.0 * scale;
     
     for (int i = 0; i < rows; i++) {
         float xSpace = width * scale / float(rows + 1);
@@ -361,7 +362,7 @@ void FluidSystem2D::resetGrid(float scale) {
 }
 
 void FluidSystem2D::resetCircle(float scale) {
-    ofVec2f center = ofVec2f(ofGetWidth() / 2.0, ofGetHeight() / 2.0);
+    ofVec2f center = ofVec2f(systemWidth / 2.0, systemHeight / 2.0);
     
     float diameter = boundsSize.x;
     if (boundsSize.y < boundsSize.x) {

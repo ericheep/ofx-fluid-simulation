@@ -119,7 +119,7 @@ ofVec3f FluidSystem3D::calculateExternalForce(int particleIndex) {
         interactiveForce = calculateInteractiveForce(particleIndex);
     }
     
-    return interactiveForce + down * gravity * gravityMultiplier * deltaTime;
+    return interactiveForce + gravityForce * gravityMultiplier * deltaTime;
 }
 
 pair<float, float> FluidSystem3D::calculateDensity(int particleIndex) {

@@ -135,3 +135,5 @@ Desktop.ini
 /apps*/
 projectGenerator*/
 .cxx/
+
+**.svg

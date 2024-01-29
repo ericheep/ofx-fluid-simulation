@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include "Particle.hpp"
 #include "Kernels.hpp"
+#include "tbb/parallel_for.h"
 
 class ParticleSystem {
 public:
@@ -19,11 +20,20 @@ public:
     float radius, gravityConstant, deltaTime, collisionDamping, predictionFactor, interactiveGravity;
     float targetDensity, nearPressureMultiplier, pressureMultiplier, gravityMultiplier, timeScalar, viscosityStrength;
     int mouseButton, mouseRadius;
+
+    enum drawModes { CIRCLES, RECTANGLES, LINES, SVG } drawMode;
+    int circleResolution, rectangleResolution, shapeResolution;
     
-    ofVboMesh mesh;
+    ofMesh mesh;
+    vector<ofVec3f> meshVertices;
+    vector<ofIndexType> meshIndices;
+    
+    vector <ofColor> colors;
+    ofMesh shapeMesh;
     
     float centerX, centerY;
     ofVec2f gravityForce;
+    float mouseForce;
     ofVec2f center;
     ofVec2f xBounds, yBounds, zBounds, mousePosition;
     ofVec3f boundsSize;
@@ -47,6 +57,7 @@ public:
     void setCollisionDamping(float collisionDamping);
     void setBoundsSize(ofVec3f bounds);
     void setMouseRadius(int mouseRadius);
+    void setMouseForce(float mouseForce);
     void setMinVelocity(float minVelocity);
     void setMaxVelocity(float maxVelocity);
     void setMinSize(float minSize);
@@ -59,8 +70,10 @@ public:
     void setNumberParticles(int number);
     void setLineCurve(float lineCurve);
     void setCenter(float centerX, float centerY);
-    void setMode(int mode);
+    void setMode(int drawMode);
     void setCircleBoundary(Boolean circleBoundaryActive);
+    void setWidth(int systemWidth);
+    void setHeight(int systemHeight);
     
     // creation functions
     void addParticle();
@@ -74,10 +87,15 @@ public:
     void mouseInput(int x, int y, int button, Boolean active);
     
     void draw();
+    void updateMesh();
+    void updateFace(int particleIndex);
+    void initializeMesh(int numParticles, int shapeResolution);
     
     void pause(Boolean pauseButton);
     void nextFrame();
     void saveSvg();
+    
+    int systemWidth, systemHeight;
 private:
 };
 

@@ -3,6 +3,7 @@
 #include "ofMain.h"
 #include "ofxGui.h"
 #include "ofxOsc.h"
+#include "ofxSyphon.h"
 
 #include "FluidSystem2D.hpp"
 #include "FluidSystem3D.hpp"
@@ -25,28 +26,29 @@ public:
 private:
     FluidSystem2D fluidSystem;
     ofEasyCam cam;
-    
+
+    ofxSyphonServer individualTextureSyphonServer;
     ofxOscReceiver oscReceiver;
     ofShader bloom;
-    ofFbo svgFbo;
+    ofFbo systemFbo;
     
     ofxPanel gui;
     ofxIntSlider numberParticles, drawMode;
     ofxFloatSlider particleSize, collisionDamping, resetScale;
     ofxFloatSlider targetDensity, nearPressureMultiplier, pressureMultiplier, gravityMultiplier, timeScalar, viscosityStrength;
     ofxFloatSlider velocityHue, bloomSpread, bloomIntensity, lineThickness, coolHue, hotHue, saturation, minVelocity, maxVelocity, velocityCurve, minSize, maxSize;
-    ofxFloatSlider centerX, centerY, gravityRotationIncrement, borderOffset;
-    ofxIntSlider mouseRadius;
+    ofxFloatSlider centerX, centerY, gravityRotationIncrement, borderOffset, mouseForce, mouseRadius;
     ofxIntSlider boundsWidth, boundsHeight, boundsDepth;
     ofxButton resetRandomButton, resetGridButton, resetCircleButton;
     ofxToggle circleBoundary;
+    
     ofColor backgroundColor, hotColor, coolColor;
     ofVec2f gravityRotation;
     
     Boolean simulateActive;
-    
-    enum MODES { MODE_SVG, MODE_OTHER } mode;
+        
     float width, height, depth;
+    int systemWidth, systemHeight, previousDrawMode;
     
     Boolean pauseActive;
     
@@ -59,6 +61,8 @@ private:
     void resetRandom();
     void resetGrid();
     void resetCircle();
+    
+    void updateMode();
     
     void updateGuiParameters();
 };

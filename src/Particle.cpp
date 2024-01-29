@@ -12,7 +12,6 @@ Particle::Particle(ofVec3f _position, float _radius) {
     lineThickness = 1;
     magnitude = 0;
 
-    mode = CIRCLE;
     velocity = ofVec3f::zero();
     nearDensity = 0.0;
     density = 0.0;
@@ -23,58 +22,123 @@ Particle::Particle(ofVec3f _position, float _radius) {
     
     minSize = 0.0;
     maxSize = 100.0;
+    size = 0.0;
+    
+    circleResolution = 22;
+    rectangleResolution = 4;
+    
+    lerpedMagnitude = 0.0;
+    lerpedTheta = 0.0;
+    
+    calculateNormalizedCircleMesh(circleResolution);
+    calculateNormalizedRectangleMesh(rectangleResolution);
+    
+    shapeMode = CIRCLE;
 }
 
 void Particle::setMode(int _mode) {
     if (_mode == 0) {
-        mode = CIRCLE;
+        shapeMode = CIRCLE;
     } else if (_mode == 1) {
-        mode = MESH;
+        shapeMode = RECTANGLE;
     } else if (_mode == 2) {
-        mode = LINE;
+        shapeMode = LINE;
     } else if (_mode == 3) {
-        mode = RECTANGLE;
-    } else if (_mode == 4) {
-        mode = TRAIL;
+        shapeMode = MESH;
+    }
+}
+
+void Particle::calculateNormalizedCircleMesh(int circleResolution) {
+    circleMesh.clear();
+    normalizedCircleMesh.clear();
+    float deltaTheta = TWO_PI / float(circleResolution);
+    
+    for (float i = 0; i < TWO_PI; i = i + deltaTheta) {
+        float x = cos(i);
+        float y = sin(i);
+        circleMesh.addVertex(ofVec3f(x, y, 0));
+        normalizedCircleMesh.addVertex(ofVec3f(x, y, 0));
+    }
+}
+
+void Particle::calculateNormalizedRectangleMesh(int rectangleResolution) {
+    rectangleMesh.clear();
+    normalizedRectangleMesh.clear();
+
+    // cornver vertices
+    rectangleMesh.addVertex(ofVec3f(-1, 1, 0));
+    rectangleMesh.addVertex(ofVec3f(1, 1, 0));
+    rectangleMesh.addVertex(ofVec3f(1, -1, 0));
+    rectangleMesh.addVertex(ofVec3f(-1, -1, 0));
+    
+    normalizedRectangleMesh.addVertex(ofVec3f(-1, 1, 0));
+    normalizedRectangleMesh.addVertex(ofVec3f(1, 1, 0));
+    normalizedRectangleMesh.addVertex(ofVec3f(1, -1, 0));
+    normalizedRectangleMesh.addVertex(ofVec3f(-1, -1, 0));
+}
+
+void Particle::updateCircleMesh() {
+    for (int i = 0; i < circleMesh.getNumVertices(); i++) {
+        circleMesh.setVertex(i, normalizedCircleMesh.getVertex(i) * size);
+    }
+}
+
+void Particle::updateRectangleMesh() {
+    ofVec3f topLeftOffset = ofVec3f(-xOffset, yOffset, 0);
+    ofVec3f topRightOffset = ofVec3f(xOffset, yOffset, 0);
+    ofVec3f bottomRightOffset = ofVec3f(xOffset, -yOffset, 0);
+    ofVec3f bottomLeftOffset = ofVec3f(-xOffset, -yOffset, 0);
+
+    rectangleMesh.setVertex(0, normalizedCircleMesh.getVertex(0) + topLeftOffset);
+    rectangleMesh.setVertex(1, normalizedCircleMesh.getVertex(1) + topRightOffset);
+    rectangleMesh.setVertex(2, normalizedCircleMesh.getVertex(2) + bottomRightOffset);
+    rectangleMesh.setVertex(3, normalizedCircleMesh.getVertex(3) + bottomLeftOffset);
+}
+
+ofMesh Particle::getShapeMesh() {
+    switch (shapeMode) {
+        case CIRCLE:
+            return circleMesh;
+            break;
+        case RECTANGLE:
+            return rectangleMesh;
+            break;
+        case LINE:
+            return rectangleMesh;
+            break;
+        case MESH:
+            return rectangleMesh;
+            break;
     }
 }
 
 void Particle::update() {
-    setSmoothedVelocity();
     setSizes();
     
-    switch (mode) {
+    switch (shapeMode) {
         case CIRCLE:
-            break;
-        case MESH:
-            setOffsets();
-            setVertices();
+            updateCircleMesh();
             break;
         case RECTANGLE:
             setOffsets();
+            updateRectangleMesh();
             break;
         case LINE:
             setOffsets();
             break;
-        case TRAIL:
-            setTrail();
+        case MESH:
+            setOffsets();
+            // setVertices();
+            updateRectangleMesh();
             break;
     }
 }
 
-void Particle::setTrail() {
-    while (positions.size() < 10) {
-        positions.push_back(position);
-    }
-    
-    positions.erase(positions.begin(), positions.begin() + 1);
-}
-
 void Particle::setSizes() {
-    magnitude = smoothedVelocity.length();
-
-    // clip!
-    float clippedMagnitude = std::max(minVelocity, std::min(magnitude, maxVelocity));
+    lerpedMagnitude = ofLerp(lerpedMagnitude, velocity.length(), 0.1);
+    
+    // clip, scale, and curve
+    float clippedMagnitude = std::max(minVelocity, std::min(lerpedMagnitude, maxVelocity));
     float scaledMagnitude = ofMap(clippedMagnitude, minVelocity, maxVelocity, 0.0, 1.0);
     float curvedMagnitude = pow(scaledMagnitude, velocityCurve);
     
@@ -83,23 +147,11 @@ void Particle::setSizes() {
 }
 
 void Particle::setOffsets() {
-    smoothedTheta = atan(smoothedVelocity.y / smoothedVelocity.x);
-    xOffset = cos(smoothedTheta) * size / 2.0;
-    yOffset = sin(smoothedTheta) * size / 2.0;
+    theta = atan(velocity.y / velocity.x);
+    lerpedTheta = ofLerp(lerpedTheta, theta, 0.1);
+    xOffset = cos(lerpedTheta) * size;
+    yOffset = sin(lerpedTheta) * size;
     zOffset = 0;
-}
-
-void Particle:: setSmoothedVelocity() {
-    while (velocities.size() < 10) {
-        velocities.push_back(velocity);
-    }
-    
-    ofVec3f sumVelocity = ofVec3f::zero();
-    for (int i = 0; i < velocities.size(); i++) {
-        sumVelocity += velocities[i];
-    }
-    smoothedVelocity = sumVelocity / velocities.size();
-    velocities.erase(velocities.begin(), velocities.begin() + 1);
 }
 
 void Particle::setVertices() {
@@ -173,28 +225,7 @@ void Particle::setVertices() {
 }
 
 void Particle::draw() {
-    ofSetColor(particleColor);
-    
-    switch (mode) {
-        case CIRCLE:
-            ofDrawCircle(position.x, position.y, size * 0.5);
-            break;
-        case MESH:
-            mesh.drawFaces();
-            break;
-        case RECTANGLE:
-            ofDrawRectangle(position.x - xOffset * 0.5, position.y - yOffset * 0.5, xOffset, yOffset);
-            break;
-        case LINE:
-            ofDrawLine(position.x - xOffset, position.y - yOffset, position.x + xOffset, position.y + yOffset);
-            break;
-        case TRAIL:
-            for (int i = 0; i < positions.size(); i++) {
-                ofDrawCircle(position.x, position.y, size * 0.5);
-            }
-            
-            break;
-    }
+    // do nothing
 }
 
 void Particle::setRadius(float _radius) {
