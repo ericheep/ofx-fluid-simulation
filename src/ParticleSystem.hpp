@@ -21,8 +21,8 @@ public:
     float targetDensity, nearPressureMultiplier, pressureMultiplier, gravityMultiplier, timeScalar, viscosityStrength;
     int mouseButton, mouseRadius;
 
-    enum drawModes { CIRCLES, RECTANGLES, VECTORS, LINES } drawMode;
-    int circleResolution, rectangleResolution, shapeResolution;
+    enum drawModes { CIRCLES, RECTANGLES, VECTORS, LINES, POINTS } drawMode;
+    int circleResolution, rectangleResolution, shapeResolution, drawModeInt;;
     
     ofMesh mesh;
     vector<ofVec3f> meshVertices;
@@ -87,10 +87,15 @@ public:
     void mouseInput(int x, int y, int button, Boolean active);
     
     void draw();
-    void updateMesh();
-    void updateFace(int particleIndex);
-    void initializeMesh(int numParticles, int shapeResolution);
-    
+    void updateMesh(int particleIndex);
+    void updateTriangle(int particleIndex);
+    void updateLine(int particleIndex);
+    void updatePoint(int particleIndex);
+    void initializeTrianglesMesh(int numParticles, int shapeResolution);
+    void initializeQuadsMesh(int numParticles);
+    void initializeLinesMesh(int numParticles);
+    void initializePointsMesh(int numParticles);
+
     void pause(Boolean pauseButton);
     void nextFrame();
     void saveSvg();

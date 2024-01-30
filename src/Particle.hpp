@@ -30,8 +30,9 @@ public:
     ofVec3f position, velocity, predictedPosition;
     ofColor particleColor, coolColor, hotColor;
     
-    ofMesh circleMesh, rectangleMesh, vectorMesh, shapeMesh;
+    ofMesh circleMesh, rectangleMesh, vectorMesh, lineMesh;
     ofMesh normalizedCircleMesh, normalizedRectangleMesh;
+    ofMesh normalizedLineMesh, normalizedVectorMesh;
     
     // drawn mesh
     ofMesh mesh;
@@ -41,22 +42,28 @@ public:
     vector <int> indicesWithinRadius;
     
     ofMesh getShapeMesh();
-    void update();
+    
     void setMode(int mode);
-    void setTrail();
+    void setRadius(float radius);
     void setVertices();
     void setSizes();
     void setSmoothedVelocity();
-    void setOffsets();
-    void draw();
-    void calculateNormalizedCircleMesh(int circleResolution);
-    void calculateNormalizedRectangleMesh();
-    void calculateNormalizedVectorMesh();
+    void setRectangleOffsets();
+    void setVectorOffsets();
+    void setLineOffsets();
+
+    void initializeCircleMeshes();
+    void initializeRectangleMeshes();
+    void initializeVectorMeshes();
+    void initializeLineMeshes();
+
     void updateCircleMesh();
     void updateRectangleMesh();
     void updateVectorMesh();
+    void updateLineMesh();
     
-    void setRadius(float radius);
+    void update();
+    void draw();
 private:
 };
 

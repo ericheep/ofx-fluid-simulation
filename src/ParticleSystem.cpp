@@ -19,15 +19,11 @@ ParticleSystem::ParticleSystem() {
     gravityForce = ofVec2f(1.0, 0.0);
     mouseForce = 1.0;
     
-    circleResolution = 22;
     rectangleResolution = 4;
+    circleResolution = 22;
     
-    shapeResolution = circleResolution;
-
     systemWidth = ofGetWidth();
     systemHeight = ofGetHeight();
-    
-    mesh.setMode(OF_PRIMITIVE_TRIANGLES);
 }
 
 void ParticleSystem::setWidth(int _systemWidth) {
@@ -38,21 +34,9 @@ void ParticleSystem::setHeight(int _systemHeight) {
     systemHeight = _systemHeight;
 }
 
-void ParticleSystem::updateFace(int particleIndex) {
-    ofMesh shapeMesh = particles[particleIndex].getShapeMesh();
-    int meshIndex = (shapeResolution + 1) * particleIndex;
-    
-    mesh.setVertex(meshIndex, particles[particleIndex].position);
-    mesh.setColor(meshIndex, particles[particleIndex].particleColor);
-    
-    for (int j = 0; j < shapeResolution; j++) {
-        mesh.setVertex(meshIndex + j + 1, shapeMesh.getVertex(j) + particles[particleIndex].position);
-        mesh.setColor(meshIndex + j + 1, particles[particleIndex].particleColor);
-    }
-}
-
-void ParticleSystem::initializeMesh(int numParticles, int shapeResolution) {
+void ParticleSystem::initializeTrianglesMesh(int numParticles, int shapeResolution) {
     mesh.clear();
+    mesh.setMode(OF_PRIMITIVE_TRIANGLES);
     
     for (int i = 0; i < numParticles; i++) {
         mesh.addVertex(ofVec3f(0, 0, 0));
@@ -77,6 +61,80 @@ void ParticleSystem::initializeMesh(int numParticles, int shapeResolution) {
             }
         }
     }
+}
+
+void ParticleSystem::initializeLinesMesh(int numParticles) {
+    mesh.clear();
+    mesh.setMode(OF_PRIMITIVE_LINES);
+
+    for (int i = 0; i < numParticles * 2; i++) {
+        mesh.addVertex(ofVec3f(0, 0, 0));
+        mesh.addColor(ofColor::black);
+        mesh.addIndex(i);
+    }
+}
+
+void ParticleSystem::initializePointsMesh(int numParticles) {
+    mesh.clear();
+    glPointSize(3);
+    mesh.setMode(OF_PRIMITIVE_POINTS);
+
+    for (int i = 0; i < numParticles; i++) {
+        mesh.addVertex(ofVec3f(0, 0, 0));
+        mesh.addColor(ofColor::black);
+        mesh.addIndex(i);
+    }
+}
+
+void ParticleSystem::updateMesh(int particleIndex) {
+    switch(drawMode) {
+        case CIRCLES:
+            updateTriangle(particleIndex);
+            break;
+        case RECTANGLES:
+            updateTriangle(particleIndex);
+            break;
+        case VECTORS:
+            updateTriangle(particleIndex);
+            break;
+        case LINES:
+            updateLine(particleIndex);
+            break;
+        case POINTS:
+            updatePoint(particleIndex);
+            break;
+    }
+}
+
+void ParticleSystem::updateTriangle(int particleIndex) {
+    ofMesh shapeMesh = particles[particleIndex].getShapeMesh();
+    int meshIndex = (shapeResolution + 1) * particleIndex;
+    
+    mesh.setVertex(meshIndex, particles[particleIndex].position);
+    mesh.setColor(meshIndex, particles[particleIndex].particleColor);
+    
+    for (int j = 0; j < shapeResolution; j++) {
+        mesh.setVertex(meshIndex + j + 1, shapeMesh.getVertex(j) + particles[particleIndex].position);
+        mesh.setColor(meshIndex + j + 1, particles[particleIndex].particleColor);
+    }
+}
+
+void ParticleSystem::updateLine(int particleIndex) {
+    ofMesh shapeMesh = particles[particleIndex].getShapeMesh();
+
+    int indexA = particleIndex * 2;
+    int indexB = particleIndex * 2 + 1;
+    
+    mesh.setVertex(indexA, shapeMesh.getVertex(0) + particles[particleIndex].position);
+    mesh.setColor(indexA, particles[particleIndex].particleColor);
+    
+    mesh.setVertex(indexB, shapeMesh.getVertex(1) + particles[particleIndex].position);
+    mesh.setColor(indexB, particles[particleIndex].particleColor);
+}
+
+void ParticleSystem::updatePoint(int particleIndex) {
+    mesh.setVertex(particleIndex, particles[particleIndex].position);
+    mesh.setColor(particleIndex, particles[particleIndex].particleColor);
 }
 
 void ParticleSystem::draw() {
@@ -142,7 +200,7 @@ void ParticleSystem::setNumberParticles(int number) {
         }
         spatialLookup.resize(particles.size());
         startIndices.resize(particles.size());
-        initializeMesh(particles.size(), shapeResolution);
+        setMode(drawModeInt);
     }
     if (number < particles.size()) {
         while (particles.size() > number) {
@@ -150,7 +208,7 @@ void ParticleSystem::setNumberParticles(int number) {
         }
         spatialLookup.resize(particles.size());
         startIndices.resize(particles.size());
-        initializeMesh(particles.size(), shapeResolution);
+        setMode(drawModeInt);
     }
 }
 
@@ -266,22 +324,29 @@ void ParticleSystem::setMode(int _drawModeInt) {
     if (_drawModeInt == 0) {
         drawMode = CIRCLES;
         shapeResolution = circleResolution;
-        initializeMesh(particles.size(), shapeResolution);
+        initializeTrianglesMesh(particles.size(), circleResolution);
     } else if (_drawModeInt == 1) {
         drawMode = RECTANGLES;
         shapeResolution = rectangleResolution;
-        initializeMesh(particles.size(), shapeResolution);
+        initializeTrianglesMesh(particles.size(), rectangleResolution);
     } else if (_drawModeInt == 2) {
         drawMode = VECTORS;
         shapeResolution = rectangleResolution;
-        initializeMesh(particles.size(), shapeResolution);
+        initializeTrianglesMesh(particles.size(), rectangleResolution);
     } else if (_drawModeInt == 3) {
         drawMode = LINES;
+        initializeLinesMesh(particles.size());
+    }
+    else if (_drawModeInt == 4) {
+        drawMode = POINTS;
+        initializePointsMesh(particles.size());
     }
     
     for (int i = 0; i < particles.size(); i++) {
         particles[i].setMode(_drawModeInt);
     }
+    
+    drawModeInt = _drawModeInt;
 }
 
 void ParticleSystem::setCenter(float _centerX, float _centerY) {

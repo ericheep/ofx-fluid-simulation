@@ -6,10 +6,10 @@ void ofApp::setup(){
 
     // systemWidth = 1920;
     // systemHeight = 1200;
-    // systemWidth = 1080;
-    // systemHeight = 1920;
-    systemWidth = ofGetWidth();
-    systemHeight = ofGetHeight();
+    systemWidth = 1080;
+    systemHeight = 1920;
+    // systemWidth = ofGetWidth();
+    // systemHeight = ofGetHeight();
 
     systemFbo.allocate(systemWidth, systemHeight);
     individualTextureSyphonServer.setName("fbo texture output");
@@ -22,9 +22,9 @@ void ofApp::setup(){
     gui.setup("fluid simulation");
     gui.setSize(170, 170);
     gui.setDefaultHeight(12);
-    gui.add(numberParticles.setup("number", 10000, 50, 20000));
+    gui.add(numberParticles.setup("number", 10000, 50, 50000));
     
-    gui.add(drawMode.setup("draw mode", 0, 0, 3));
+    gui.add(drawMode.setup("draw mode", 0, 0, 4));
     gui.add(particleSize.setup("particle size", 15.0, 0.5, 50.0));
     gui.add(timeScalar.setup("time scalar", 1.0, 0.5, 4.0));
 
@@ -269,8 +269,9 @@ void ofApp::windowResized(int w, int h) {
 void ofApp::updateMode() {
     // 0 = circles
     // 1 = rectangles
-    // 2 = lines
-    // 3 = svg
+    // 2 = vectors
+    // 3 = lines
+    // 4 = points
     
     if (previousDrawMode != drawMode) {
         fluidSystem.setMode(drawMode);

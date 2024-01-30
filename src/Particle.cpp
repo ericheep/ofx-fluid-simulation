@@ -30,9 +30,10 @@ Particle::Particle(ofVec3f _position, float _radius) {
     lerpedMagnitude = 0.0;
     lerpedTheta = 0.0;
     
-    calculateNormalizedCircleMesh(circleResolution);
-    calculateNormalizedRectangleMesh();
-    calculateNormalizedVectorMesh();
+    initializeCircleMeshes();
+    initializeRectangleMeshes();
+    initializeVectorMeshes();
+    initializeLineMeshes();
     
     shapeMode = CIRCLE;
 }
@@ -49,7 +50,7 @@ void Particle::setMode(int _mode) {
     }
 }
 
-void Particle::calculateNormalizedCircleMesh(int circleResolution) {
+void Particle::initializeCircleMeshes() {
     circleMesh.clear();
     normalizedCircleMesh.clear();
     float deltaTheta = TWO_PI / float(circleResolution);
@@ -62,7 +63,7 @@ void Particle::calculateNormalizedCircleMesh(int circleResolution) {
     }
 }
 
-void Particle::calculateNormalizedRectangleMesh() {
+void Particle::initializeRectangleMeshes() {
     rectangleMesh.clear();
     normalizedRectangleMesh.clear();
 
@@ -78,14 +79,31 @@ void Particle::calculateNormalizedRectangleMesh() {
     normalizedRectangleMesh.addVertex(ofVec3f(-1, -1, 0));
 }
 
-void Particle::calculateNormalizedVectorMesh() {
-    vectorMesh.clear();
+void Particle::initializeVectorMeshes() {
+    lineMesh.clear();
+    normalizedLineMesh.clear();
 
-    // cornver vertices
+    // corner vertices
     vectorMesh.addVertex(ofVec3f(-1, 1, 0));
     vectorMesh.addVertex(ofVec3f(1, 1, 0));
     vectorMesh.addVertex(ofVec3f(1, -1, 0));
     vectorMesh.addVertex(ofVec3f(-1, -1, 0));
+    
+    normalizedVectorMesh.addVertex(ofVec3f(-1, 1, 0));
+    normalizedVectorMesh.addVertex(ofVec3f(1, 1, 0));
+    normalizedVectorMesh.addVertex(ofVec3f(1, -1, 0));
+    normalizedVectorMesh.addVertex(ofVec3f(-1, -1, 0));
+}
+
+void Particle::initializeLineMeshes() {
+    lineMesh.clear();
+    normalizedLineMesh.clear();
+
+    lineMesh.addVertex(ofVec3f(-1, 0, 0));
+    lineMesh.addVertex(ofVec3f(1, 0, 0));
+    
+    normalizedLineMesh.addVertex(ofVec3f(-1, 0, 0));
+    normalizedLineMesh.addVertex(ofVec3f(1, 0, 0));
 }
 
 void Particle::updateCircleMesh() {
@@ -107,15 +125,29 @@ void Particle::updateRectangleMesh() {
 }
 
 void Particle::updateVectorMesh() {
-    ofVec3f topLeftOffset = ofVec3f(xOffset, yOffset + lineThickness, zOffset);
-    ofVec3f topRightOffset = ofVec3f(-xOffset, -yOffset + lineThickness, zOffset);
-    ofVec3f bottomLeftOffset = ofVec3f(xOffset, yOffset - lineThickness, zOffset);
-    ofVec3f bottomRightOffset = ofVec3f(-xOffset, -yOffset - lineThickness, zOffset);
+    ofVec3f topLeftOffset = ofVec3f(xOffset, yOffset, zOffset);
+    ofVec3f topRightOffset = ofVec3f(-xOffset, -yOffset, zOffset);
+    ofVec3f bottomLeftOffset = ofVec3f(xOffset, yOffset, zOffset);
+    ofVec3f bottomRightOffset = ofVec3f(-xOffset, -yOffset, zOffset);
     
-    vectorMesh.setVertex(0, normalizedRectangleMesh.getVertex(0) + topLeftOffset);
-    vectorMesh.setVertex(1, normalizedRectangleMesh.getVertex(1) + topRightOffset);
-    vectorMesh.setVertex(2, normalizedRectangleMesh.getVertex(2) + bottomRightOffset);
-    vectorMesh.setVertex(3, normalizedRectangleMesh.getVertex(3) + bottomLeftOffset);
+    float normal = lerpedTheta + HALF_PI;
+    float xNormal = cos(normal);
+    float yNormal = sin(normal);
+    
+    ofVec3f n = ofVec3f(xNormal, yNormal, 0) * lineThickness * 0.5;
+    
+    vectorMesh.setVertex(0, normalizedVectorMesh.getVertex(0) + topLeftOffset + n);
+    vectorMesh.setVertex(1, normalizedVectorMesh.getVertex(1) + topRightOffset + n);
+    vectorMesh.setVertex(2, normalizedVectorMesh.getVertex(2) + bottomRightOffset - n);
+    vectorMesh.setVertex(3, normalizedVectorMesh.getVertex(3) + bottomLeftOffset - n);
+}
+
+void Particle::updateLineMesh() {
+    ofVec3f p1 = ofVec3f(-xOffset, -yOffset);
+    ofVec3f p2 = ofVec3f(xOffset, yOffset);
+    
+    lineMesh.setVertex(0, normalizedLineMesh.getVertex(0) + p1);
+    lineMesh.setVertex(1, normalizedLineMesh.getVertex(1) * p2);
 }
 
 ofMesh Particle::getShapeMesh() {
@@ -130,7 +162,7 @@ ofMesh Particle::getShapeMesh() {
             return vectorMesh;
             break;
         case LINE:
-            return rectangleMesh;
+            return lineMesh;
             break;
     }
 }
@@ -143,17 +175,16 @@ void Particle::update() {
             updateCircleMesh();
             break;
         case RECTANGLE:
-            setOffsets();
+            setRectangleOffsets();
             updateRectangleMesh();
             break;
         case VECTOR:
-            setOffsets();
+            setVectorOffsets();
             updateVectorMesh();
             break;
         case LINE:
-            setOffsets();
-            // setVertices();
-            updateRectangleMesh();
+            setLineOffsets();
+            updateLineMesh();
             break;
     }
 }
@@ -170,7 +201,7 @@ void Particle::setSizes() {
     size = minSize + (maxSize - minSize) * curvedMagnitude;
 }
 
-void Particle::setOffsets() {
+void Particle::setRectangleOffsets() {
     theta = atan(velocity.y / velocity.x);
     lerpedTheta = ofLerp(lerpedTheta, theta, 0.1);
     xOffset = cos(lerpedTheta) * size;
@@ -178,80 +209,26 @@ void Particle::setOffsets() {
     zOffset = 0;
 }
 
-void Particle::setVertices() {
-    float yThickness = lineThickness / 2.0;
-    
-    ofVec3f leftTopFront = ofVec3f(position.x + xOffset, position.y + yOffset + yThickness, position.z - zOffset);
-    ofVec3f leftTopBack = ofVec3f(position.x + xOffset, position.y + yOffset + yThickness, position.z + zOffset);
-    ofVec3f leftBottomFront = ofVec3f(position.x + xOffset, position.y + yOffset - yThickness, position.z - zOffset);
-    ofVec3f leftBottomBack = ofVec3f(position.x + xOffset, position.y + yOffset - yThickness, position.z + zOffset);
-    
-    ofVec3f rightTopFront = ofVec3f(position.x - xOffset, position.y - yOffset + yThickness, position.z - zOffset);
-    ofVec3f rightTopBack = ofVec3f(position.x - xOffset, position.y - yOffset + yThickness, position.z + zOffset);
-    ofVec3f rightBottomFront = ofVec3f(position.x - xOffset, position.y - yOffset - yThickness, position.z - zOffset);
-    ofVec3f rightBottomBack = ofVec3f(position.x - xOffset, position.y - yOffset - yThickness, position.z + zOffset);
-    
-    mesh.clear();
-    
-    // left side
-    mesh.addVertex(leftTopFront);
-    mesh.addVertex(leftTopBack);
-    mesh.addVertex(leftBottomFront);
-    
-    mesh.addVertex(leftTopBack);
-    mesh.addVertex(leftBottomBack);
-    mesh.addVertex(leftBottomFront);
-    
-    // top side
-    mesh.addVertex(leftTopBack);
-    mesh.addVertex(leftTopFront);
-    mesh.addVertex(rightTopFront);
-    
-    mesh.addVertex(rightTopBack);
-    mesh.addVertex(rightTopFront);
-    mesh.addVertex(leftTopBack);
-    
-    // bottom side
-    mesh.addVertex(leftBottomBack);
-    mesh.addVertex(leftBottomFront);
-    mesh.addVertex(rightBottomFront);
-    
-    mesh.addVertex(rightBottomBack);
-    mesh.addVertex(rightBottomFront);
-    mesh.addVertex(leftBottomBack);
-    
-    // front side
-    mesh.addVertex(leftTopFront);
-    mesh.addVertex(leftBottomFront);
-    mesh.addVertex(rightTopFront);
-
-    mesh.addVertex(rightTopFront);
-    mesh.addVertex(rightBottomFront);
-    mesh.addVertex(leftBottomFront);
-    
-    // back side
-    mesh.addVertex(leftTopBack);
-    mesh.addVertex(leftBottomBack);
-    mesh.addVertex(rightTopBack);
-
-    mesh.addVertex(rightTopBack);
-    mesh.addVertex(rightBottomBack);
-    mesh.addVertex(leftBottomBack);
-    
-    // right side
-    mesh.addVertex(rightTopFront);
-    mesh.addVertex(rightTopBack);
-    mesh.addVertex(rightBottomFront);
-    
-    mesh.addVertex(rightTopBack);
-    mesh.addVertex(rightBottomBack);
-    mesh.addVertex(rightBottomFront);
+void Particle::setVectorOffsets() {
+    theta = atan(velocity.y / velocity.x);
+    lerpedTheta = ofLerp(lerpedTheta, theta, 0.1);
+    xOffset = cos(lerpedTheta) * size;
+    yOffset = sin(lerpedTheta) * size;
+    zOffset = 0;
 }
 
-void Particle::draw() {
-    // do nothing
+void Particle::setLineOffsets() {
+    theta = atan(velocity.y / velocity.x);
+    lerpedTheta = ofLerp(lerpedTheta, theta, 0.1);
+    xOffset = cos(lerpedTheta) * size;
+    yOffset = sin(lerpedTheta) * size;
+    zOffset = 0;
 }
 
 void Particle::setRadius(float _radius) {
     radius = _radius;
+}
+
+void Particle::draw() {
+    // do nothing
 }
