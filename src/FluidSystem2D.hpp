@@ -19,7 +19,7 @@ public:
     void update();
 
     void resolveCollisions(int particleIndex);
-    ofVec2f pushParticlesAwayFromPoint(ofVec2f pointA, ofVec2f pointB);
+    ofVec2f pushParticlesAwayFromPoint(ofVec2f pointA, ofVec2f pointB, ofVec2f velocity);
     ofVec2f pullParticlesToPoint(ofVec2f pointA, ofVec2f pointB);
     
     // math

@@ -29,40 +29,80 @@ private:
 
     ofxSyphonServer individualTextureSyphonServer;
     ofxOscReceiver oscReceiver;
-    ofShader bloom;
     ofFbo systemFbo;
     
-    ofxPanel gui;
-    ofxIntSlider numberParticles, drawMode;
-    ofxFloatSlider particleSize, collisionDamping, resetScale;
-    ofxFloatSlider targetDensity, nearPressureMultiplier, pressureMultiplier, gravityMultiplier, timeScalar, viscosityStrength;
-    ofxFloatSlider velocityHue, bloomSpread, bloomIntensity, lineThickness, coolHue, hotHue, saturation, minVelocity, maxVelocity, velocityCurve, minSize, maxSize;
-    ofxFloatSlider centerX, centerY, gravityRotationIncrement, borderOffset, mouseForce, mouseRadius;
-    ofxIntSlider boundsWidth, boundsHeight, boundsDepth;
-    ofxButton resetRandomButton, resetGridButton, resetCircleButton;
-    ofxToggle circleBoundary;
+    ofxPanel gui, coolColorGui, hotColorGui;
+    ofParameterGroup simulationSettings;
+    ofParameterGroup boundarySettings;
     
-    ofColor backgroundColor, hotColor, coolColor;
-    ofVec2f gravityRotation;
+    ofParameter<int> drawMode;
+    ofParameter<int> numberParticles;
+    ofParameter<float> timeScalar;
+    ofParameter<float> influenceRadius;
+    ofParameter<float> gravityMultiplier;
+    ofParameter<float> targetDensity;
+    ofParameter<float> pressureMultiplier;
+    ofParameter<float> nearPressureMultiplier;
     
-    Boolean simulateActive;
-        
-    float width, height, depth;
-    int systemWidth, systemHeight, previousDrawMode;
+    ofParameter<int> boundsWidth, boundsHeight;
+    ofParameter<int> borderOffset;
     
-    Boolean pauseActive;
+    ofParameter<float> velocityCurve;
+    ofParameter<float> minVelocity, maxVelocity;
+    ofParameter<float> minSize, maxSize;
     
+    ofParameter<float> mouseForce, mouseRadius;
+    ofParameter<bool> circleBoundary;
+
+    ofxFloatSlider lineThickness;
+    ofxFloatSlider centerX, centerY, gravityRotationIncrement;
+
+    ofxButton resetRandomButton, resetGridButton;
+    ofxColorSlider coolColor, hotColor, backgroundColor;
+            
+    // syphon output settings
+    int systemWidth, systemHeight;
     float widthRatio, heightRatio;
+    ofVec2f gravityRotation;
+    Boolean pauseActive;
+    Boolean simulateActive;
     
+    // keyboard functions
     void pause();
     void nextFrame();
     void saveSvg();
     
+    // gui listener functions
+    void setDrawMode(int & drawMode);
+    void setNumberParticles(int & numberParticles);
+    void setTimeScalar(float & timeScalar);
+    void setInfluenceRadius(float & influenceRadius);
+    void setGravityMultiplier(float & gravityMultiplier);
+    void setTargetDensity(float & targetDensity);
+    void setPressureMultiplier(float & pressureMultiplier);
+    void setNearPressureMultiplier(float & nearPressureMultiplier);
+    void setCoolColor(ofColor & coolColor);
+    void setHotColor(ofColor & hotColor);
+    
+    // gui boundary listener functions
+    void setBoundsWidth(int & boundsWidth);
+    void setBoundsHeight(int & boundsHeight);
+    void setBorderOffset(int & borderOffset);
+    void setCircleBoundary(bool & circleBoundary);
+    
+    // gui graphic listener functions
+    void setVelocityCurve(float & velocityCurve);
+    void setMinVelocity(float & minVelocity);
+    void setMaxVelocity(float & maxVelocity);
+    void setMinSize(float & minSize);
+    void setMaxSize(float & maxSize);
+    void setLineThickness(float & lineThickness);
+    
+    // gui mouse listener functions
+    void setMouseRadius(float & mouseRadius);
+    void setMouseForce(float & mouseForce);
+    
     void resetRandom();
     void resetGrid();
     void resetCircle();
-    
-    void updateMode();
-    
-    void updateGuiParameters();
 };

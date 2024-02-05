@@ -6,7 +6,7 @@
 #include "FluidSystem2D.hpp"
 
 FluidSystem2D::FluidSystem2D() {
-    kernels.calculate2DVolumesFromRadius(radius);
+    kernels.calculate3DVolumesFromRadius(radius);
     
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
@@ -67,10 +67,12 @@ void FluidSystem2D::update() {
 
 ofVec2f FluidSystem2D::calculateInteractiveForce(int particleIndex) {
     ofVec2f particlePosition = particles[particleIndex].position;
+    ofVec2f particleVelocity = particles[particleIndex].velocity;
+
     ofVec2f interactiveForce= ofVec2f::zero();
     
     if (mouseButton == 0) {
-        interactiveForce = pushParticlesAwayFromPoint(mousePosition, particlePosition);
+        interactiveForce = pushParticlesAwayFromPoint(mousePosition, particlePosition, particleVelocity);
     }
     if (mouseButton == 2) {
         interactiveForce = pullParticlesToPoint(mousePosition, particlePosition);
@@ -88,14 +90,14 @@ ofVec2f FluidSystem2D::pullParticlesToPoint(ofVec2f pointA, ofVec2f pointB) {
     if (squareDistance < inputRadius * inputRadius) {
         float distance = sqrt(squareDistance);
         ofVec2f direction = (pointA - pointB) / distance;
-        float scalarProximity = 1.0 - distance / inputRadius;
+        float scalarProximity = distance / inputRadius;
         
         interactiveForce =  direction * mouseForce * scalarProximity;
     }
     return interactiveForce;
 }
 
-ofVec2f FluidSystem2D::pushParticlesAwayFromPoint(ofVec2f pointA, ofVec2f pointB) {
+ofVec2f FluidSystem2D::pushParticlesAwayFromPoint(ofVec2f pointA, ofVec2f pointB, ofVec2f velocity) {
     ofVec2f interactiveForce = ofVec2f::zero();
     
     float inputRadius = mouseRadius;
@@ -278,7 +280,7 @@ pair<int, int> FluidSystem2D::positionToCellCoordinate(ofVec2f position, float r
 void FluidSystem2D::resolveCollisions(int particleIndex) {
     if (circleBoundaryActive) {
         float distance = particles[particleIndex].position.distance(center);
-        float maxDistance = 455;
+        float maxDistance = circleBoundaryRadius;
         
         center.x = centerX;
         center.y = centerY;
@@ -323,11 +325,15 @@ void FluidSystem2D::resolveCollisions(int particleIndex) {
 // reset particles
 
 void FluidSystem2D::resetRandom() {
-    for (int i = 0; i < particles.size(); ++i) {
-        float x = ofRandom(bounds.x, bounds.x + boundsSize.x);
-        float y = ofRandom(bounds.y, bounds.y + boundsSize.y);
-        particles[i].position = ofVec2f(x, y);
-        particles[i].velocity = getRandom2DDirection();
+    if (circleBoundaryActive) {
+        resetCircle(1.0);
+    } else {
+        for (int i = 0; i < particles.size(); ++i) {
+            float x = ofRandom(bounds.x, bounds.x + boundsSize.x);
+            float y = ofRandom(bounds.y, bounds.y + boundsSize.y);
+            particles[i].position = ofVec2f(x, y);
+            particles[i].velocity = getRandom2DDirection();
+        }
     }
 }
 

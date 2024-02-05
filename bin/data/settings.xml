@@ -1,32 +1,32 @@
 <?xml version="1.0"?>
 <fluid_simulation>
-	<number>2500</number>
-	<gravity_multiplier>2</gravity_multiplier>
-	<particle_size>40</particle_size>
-	<target_density>1</target_density>
-	<pressure_multiplier>50</pressure_multiplier>
-	<near_pressure_multiplier>25</near_pressure_multiplier>
+	<number>10000</number>
+	<gravity_multiplier>1</gravity_multiplier>
+	<particle_size>15</particle_size>
+	<target_density>2</target_density>
+	<pressure_multiplier>500</pressure_multiplier>
+	<near_pressure_multiplier>100</near_pressure_multiplier>
 	<viscosity_strength>0.25</viscosity_strength>
 	<collision_damping>0.05</collision_damping>
-	<width>1920</width>
-	<height>1200</height>
+	<width>1080</width>
+	<height>1920</height>
 	<reset_scale>1</reset_scale>
 	<draw_mode>0</draw_mode>
-	<time_scalar>4</time_scalar>
+	<time_scalar>1</time_scalar>
 	<circle_boundary>1</circle_boundary>
 	<offset>0</offset>
-	<gravity_rotation_inc>10</gravity_rotation_inc>
-	<mouse_radius>315</mouse_radius>
-	<mouse_force>44.0941</mouse_force>
+	<gravity_rotation_inc>1</gravity_rotation_inc>
+	<mouse_radius>250</mouse_radius>
+	<mouse_force>50</mouse_force>
 	<velocity_curve>1</velocity_curve>
 	<min_velocity>0</min_velocity>
-	<max_velocity>100</max_velocity>
+	<max_velocity>50</max_velocity>
 	<min_size>0</min_size>
-	<max_size>13.8235</max_size>
+	<max_size>8</max_size>
 	<line_thickness>1</line_thickness>
-	<cool_hue>112.5</cool_hue>
+	<cool_hue>120</cool_hue>
 	<hot_hue>255</hot_hue>
-	<saturation>0</saturation>
-	<center_X>960</center_X>
-	<center_Y>600</center_Y>
+	<saturation>60</saturation>
+	<center_X>540</center_X>
+	<center_Y>960</center_Y>
 </fluid_simulation>

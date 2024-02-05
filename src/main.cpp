@@ -5,6 +5,7 @@
 int main() {
 	ofGLWindowSettings settings;
 
+    // settings.setSize(960, 600);
     settings.setSize(540, 960);
     settings.setGLVersion(4,1);
 

@@ -6,7 +6,7 @@
 #include "ParticleSystem.hpp"
 
 ParticleSystem::ParticleSystem() {
-    radius = 10;
+    radius = 1.0;
     predictionFactor = 1.0f / 120.0f;
     pressureMultiplier = 1.0;
     nearPressureMultiplier = 1.0;
@@ -14,10 +14,11 @@ ParticleSystem::ParticleSystem() {
     viscosityStrength = 0.5;
     gravityConstant = 9.8; //meters per second
     gravityMultiplier = 1.0;
-    collisionDamping = 0.26;
+    collisionDamping = 0.25;
     pauseActive = false;
     gravityForce = ofVec2f(1.0, 0.0);
     mouseForce = 1.0;
+    circleBoundaryRadius = 455;
     
     rectangleResolution = 4;
     circleResolution = 22;
@@ -66,7 +67,7 @@ void ParticleSystem::initializeTrianglesMesh(int numParticles, int shapeResoluti
 void ParticleSystem::initializeLinesMesh(int numParticles) {
     mesh.clear();
     mesh.setMode(OF_PRIMITIVE_LINES);
-
+    
     for (int i = 0; i < numParticles * 2; i++) {
         mesh.addVertex(ofVec3f(0, 0, 0));
         mesh.addColor(ofColor::black);
@@ -78,7 +79,7 @@ void ParticleSystem::initializePointsMesh(int numParticles) {
     mesh.clear();
     glPointSize(3);
     mesh.setMode(OF_PRIMITIVE_POINTS);
-
+    
     for (int i = 0; i < numParticles; i++) {
         mesh.addVertex(ofVec3f(0, 0, 0));
         mesh.addColor(ofColor::black);
@@ -121,7 +122,7 @@ void ParticleSystem::updateTriangle(int particleIndex) {
 
 void ParticleSystem::updateLine(int particleIndex) {
     ofMesh shapeMesh = particles[particleIndex].getShapeMesh();
-
+    
     int indexA = particleIndex * 2;
     int indexB = particleIndex * 2 + 1;
     
@@ -142,12 +143,27 @@ void ParticleSystem::draw() {
 }
 
 // create particles
-
 void ParticleSystem::addParticle() {
-    float x = ofRandom(bounds.x, bounds.x + boundsSize.x);
-    float y = ofRandom(bounds.y, bounds.y + boundsSize.y);
-    float z = ofRandom(bounds.z, bounds.z + boundsSize.z);
-    particles.push_back(Particle(ofVec3f(x, y, z), 1.0));
+    ofVec2f position;
+    
+    if (circleBoundaryActive) {
+        ofVec2f center = ofVec2f(systemWidth / 2.0, systemHeight / 2.0);
+        
+        float theta = ofRandom(0, TWO_PI);
+        float magnitude = ofRandom(0, circleBoundaryRadius);
+        
+        float x = cos(theta) * magnitude;
+        float y = sin(theta) * magnitude;
+        
+        position = ofVec2f(x, y) + center;
+    } else {
+        float x = ofRandom(bounds.x, bounds.x + boundsSize.x);
+        float y = ofRandom(bounds.y, bounds.y + boundsSize.y);
+        
+        position = ofVec2f(x, y);
+    }
+    
+    particles.push_back(Particle(position, 1.0));
 }
 
 ofVec2f ParticleSystem::getRandom2DDirection() {
@@ -180,7 +196,6 @@ void ParticleSystem::saveSvg() {
 }
 
 // mouse input
-
 void ParticleSystem::mouseInput(int x, int y, int button, Boolean active) {
     mouseInputActive = active;
     mouseButton = button;
@@ -192,7 +207,6 @@ void ParticleSystem::mouseInput(int x, int y) {
 }
 
 // setters
-
 void ParticleSystem::setNumberParticles(int number) {
     if (number > particles.size()) {
         while (particles.size() < number) {
@@ -227,13 +241,11 @@ void ParticleSystem::setBoundsSize(ofVec3f _boundsSize) {
 }
 
 void ParticleSystem::setRadius(float _radius) {
-    if (radius != _radius) {
-        for (int i = 0; i < particles.size(); i++) {
-            particles[i].setRadius(_radius);
-        }
-        kernels.calculate2DVolumesFromRadius(_radius);
-        radius = _radius;
+    for (int i = 0; i < particles.size(); i++) {
+        particles[i].setRadius(_radius);
     }
+    kernels.calculate3DVolumesFromRadius(_radius);
+    radius = _radius;
 }
 
 void ParticleSystem::setGravityRotation(ofVec2f _gravityRotation) {
@@ -340,6 +352,10 @@ void ParticleSystem::setMode(int _drawModeInt) {
     else if (_drawModeInt == 4) {
         drawMode = POINTS;
         initializePointsMesh(particles.size());
+    }
+    else if (_drawModeInt == 5) {
+        // drawMode = SVG;
+        // initializePointsMesh(particles.size());
     }
     
     for (int i = 0; i < particles.size(); i++) {

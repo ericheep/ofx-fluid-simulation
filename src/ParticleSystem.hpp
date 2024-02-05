@@ -40,6 +40,8 @@ public:
     ofVec3f bounds;
     Kernels kernels;
     Boolean mouseInputActive, pauseActive, nextFrameActive, exportFrameActive, SVG_MODE;
+    
+    float circleBoundaryRadius;
     Boolean circleBoundaryActive;
 
     vector<pair<int, unsigned int>> spatialLookup;

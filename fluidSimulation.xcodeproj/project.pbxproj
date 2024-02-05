@@ -570,6 +570,7 @@
 					/opt/homebrew/Cellar/tbb/2021.11.0/include,
 				);
 				LIBRARY_SEARCH_PATHS = /opt/homebrew/Cellar/tbb/2021.11.0/lib;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				OTHER_CPLUSPLUSFLAGS = "-D__MACOSX_CORE__";
 				OTHER_LDFLAGS = (
 					"$(OF_CORE_LIBS)",
@@ -595,6 +596,7 @@
 					/opt/homebrew/Cellar/tbb/2021.11.0/include,
 				);
 				LIBRARY_SEARCH_PATHS = /opt/homebrew/Cellar/tbb/2021.11.0/lib;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				OTHER_CPLUSPLUSFLAGS = "-D__MACOSX_CORE__";
 				OTHER_LDFLAGS = (
 					"$(OF_CORE_LIBS)",

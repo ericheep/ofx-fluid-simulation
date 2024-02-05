@@ -21,7 +21,7 @@ Particle::Particle(ofVec3f _position, float _radius) {
     maxVelocity = 1.0;
     
     minSize = 0.0;
-    maxSize = 100.0;
+    maxSize = 0.0;
     size = 0.0;
     
     circleResolution = 22;
@@ -47,7 +47,10 @@ void Particle::setMode(int _mode) {
         shapeMode = VECTOR;
     } else if (_mode == 3) {
         shapeMode = LINE;
+    } else if (_mode == 4) {
+        // shapeMode = SVG;
     }
+    
 }
 
 void Particle::initializeCircleMeshes() {
