@@ -3,6 +3,9 @@
 // contrast
 // fragment shader
 
+// adapted from Wojtazam's "Brightness, contrast, and saturation"
+// https://www.shadertoy.com/view/XdcXzn
+
 uniform sampler2DRect tex0;
 uniform float u_contrastAmount = 0.0;
 

@@ -3,6 +3,9 @@
 // bloom
 // fragment shader
 
+// adapted for ofx from existical's "gaussian blur simple and fast"
+// https://www.shadertoy.com/view/Xltfzj
+
 uniform sampler2DRect tex0;
 uniform float u_blurMix = 0.0;
 uniform float u_blurQuality = 3.0;
@@ -18,7 +21,7 @@ void main() {
     // pixel color
     vec4 color = texture(tex0, texCoordVarying);
     
-    // Blur calculations
+    // blur calculations
     for( float theta = 0.0; theta < two_pi; theta += two_pi / u_blurAngles) {
         for(float i = 1.0 / u_blurQuality; i <= 1.0; i+= 1.0 / u_blurQuality) {
             color += texture(tex0, texCoordVarying + vec2(cos(theta), sin(theta)) * u_blurRadius * i);
