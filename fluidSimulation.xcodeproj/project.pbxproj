@@ -71,6 +71,12 @@
 		"0173146F-F297-4C4F-8B1E-5748EB7DAB20" /* ofxColorPicker.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = ofxColorPicker.cpp; path = ../../../addons/ofxGui/src/ofxColorPicker.cpp; sourceTree = SOURCE_ROOT; };
 		"04A5F49B-19D2-4EB0-80EB-53485A51CD2F" /* Particle.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = Particle.hpp; path = src/Particle.hpp; sourceTree = SOURCE_ROOT; };
 		"05C27FD6-B292-42A0-BF8F-F966B9E1FE78" /* UdpSocket.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = UdpSocket.h; path = ../../../addons/ofxOsc/libs/oscpack/src/ip/UdpSocket.h; sourceTree = SOURCE_ROOT; };
+		06D9C2A12B7075F60061AD5B /* bloom.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = bloom.vert; sourceTree = "<group>"; };
+		06D9C2A22B7075F60061AD5B /* blur.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = blur.vert; sourceTree = "<group>"; };
+		06D9C2A32B7075F60061AD5B /* bloom.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = bloom.frag; sourceTree = "<group>"; };
+		06D9C2A42B7075F60061AD5B /* blur.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = blur.frag; sourceTree = "<group>"; };
+		06D9C2A52B708AE00061AD5B /* contrast.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = contrast.frag; sourceTree = "<group>"; };
+		06D9C2A62B708AE00061AD5B /* contrast.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = contrast.vert; sourceTree = "<group>"; };
 		"0732B6D3-4632-4449-AE3B-CE3C8901EC05" /* Syphon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Syphon.framework; path = ../../../addons/ofxSyphon/libs/Syphon/lib/osx/Syphon.framework; sourceTree = SOURCE_ROOT; };
 		"0A8450F5-39E7-499B-BE23-4868280DB299" /* ofxGuiGroup.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = ofxGuiGroup.h; path = ../../../addons/ofxGui/src/ofxGuiGroup.h; sourceTree = SOURCE_ROOT; };
 		"0C645119-21A5-4A66-B213-FE505FEA47C8" /* ofxSyphonServer.mm */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = ofxSyphonServer.mm; path = ../../../addons/ofxSyphon/src/ofxSyphonServer.mm; sourceTree = SOURCE_ROOT; };
@@ -166,6 +172,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		06D9C2A02B7075F60061AD5B /* shaders */ = {
+			isa = PBXGroup;
+			children = (
+				06D9C2A62B708AE00061AD5B /* contrast.vert */,
+				06D9C2A12B7075F60061AD5B /* bloom.vert */,
+				06D9C2A22B7075F60061AD5B /* blur.vert */,
+				06D9C2A52B708AE00061AD5B /* contrast.frag */,
+				06D9C2A32B7075F60061AD5B /* bloom.frag */,
+				06D9C2A42B7075F60061AD5B /* blur.frag */,
+			);
+			name = shaders;
+			path = bin/data/shaders;
+			sourceTree = "<group>";
+		};
 		"130FC1D4-D652-433F-8D6D-5E7960B59723" /* src */ = {
 			isa = PBXGroup;
 			children = (
@@ -325,6 +345,7 @@
 		E4B69B4A0A3A1720003C02F2 = {
 			isa = PBXGroup;
 			children = (
+				06D9C2A02B7075F60061AD5B /* shaders */,
 				191CD6FA2847E21E0085CBB6 /* of.entitlements */,
 				E4B6FCAD0C3E899E008CF71C /* openFrameworks-Info.plist */,
 				E4EB6923138AFD0F00A09F29 /* Project.xcconfig */,

@@ -4,15 +4,23 @@
 void ofApp::setup(){
     oscReceiver.setup(RECEIVING_PORT);
     
+    blur.load("shaders/blur");
+    contrast.load("shaders/contrast");
+
     //systemWidth = 1920;
     //systemHeight = 1200;
     systemWidth = 1080;
     systemHeight = 1920;
+    
     systemFbo.allocate(systemWidth, systemHeight);
+    blurFbo.allocate(systemWidth, systemHeight);
+    bloomFbo.allocate(systemWidth, systemHeight);
+    contrastFbo.allocate(systemWidth, systemHeight);
+    
     individualTextureSyphonServer.setName("fbo texture output");
     ofSetFrameRate(60);
 
-    // gui setup
+    // main gui setup
     ofxGuiSetFont("DankMono-Bold.ttf", 10);
     ofxGuiSetBorderColor(16);
     gui.setup("fluid sim");
@@ -22,14 +30,14 @@ void ofApp::setup(){
     
     // general gui settings
     numberParticles.addListener(this, &ofApp::setNumberParticles);
-    gui.add(numberParticles.set("number", 45000, 50, 100000));
+    gui.add(numberParticles.set("number", 25000, 50, 100000));
     influenceRadius.addListener(this, &ofApp::setInfluenceRadius);
-    gui.add(influenceRadius.set("influence radius", 4.0, 0.5, 25.0));
+    gui.add(influenceRadius.set("influence radius", 10.0, 0.5, 35.0));
     timeScalar.addListener(this, &ofApp::setTimeScalar);
     gui.add(timeScalar.set("time scalar", 1.0, 0.5, 4.0));
     gravityMultiplier.addListener(this, &ofApp::setGravityMultiplier);
-    gui.add(gravityMultiplier.set("gravity multiplier", 1.0, 0.0, 5.0));
-    gui.add(gravityRotationIncrement.setup("gravity rotation", 1.0, 0.0, 5.0));
+    gui.add(gravityMultiplier.set("gravity multiplier", 0.0, 0.0, 5.0));
+    gui.add(gravityRotationIncrement.setup("gravity rotation", 0.0, 0.0, 5.0));
     
     // graphic gui settings
     drawMode.addListener(this, &ofApp::setDrawMode);
@@ -41,9 +49,9 @@ void ofApp::setup(){
     maxVelocity.addListener(this, &ofApp::setMaxVelocity);
     gui.add(maxVelocity.set("max velocity", 50.0, 0.0, 250.0));
     minSize.addListener(this, &ofApp::setMinSize);
-    gui.add(minSize.set("min size", 0.0, 0.0, 50.0));
+    gui.add(minSize.set("min size", 1.0, 0.0, 50.0));
     maxSize.addListener(this, &ofApp::setMaxSize);
-    gui.add(maxSize.set("max size", 8.0, 0.0, 50.0));
+    gui.add(maxSize.set("max size", 25.0, 0.0, 100.0));
     mouseRadius.addListener(this, &ofApp::setMouseRadius);
     gui.add(mouseRadius.set("mouse radius", 200, 10, 500));
     mouseForce.addListener(this, &ofApp::setMouseForce);
@@ -70,7 +78,7 @@ void ofApp::setup(){
     borderOffset.addListener(this, &ofApp::setBorderOffset);
     boundarySettings.add(borderOffset.set("offset", 0.0, 0.0, 50.0));
     circleBoundary.addListener(this, &ofApp::setCircleBoundary);
-    boundarySettings.add(circleBoundary.set("circle boundary", true));
+    boundarySettings.add(circleBoundary.set("circle boundary", false));
     gui.add(boundarySettings);
    
     // cool color gui setup
@@ -100,6 +108,18 @@ void ofApp::setup(){
     // close seldom used windows
     gui.minimizeAll();
     gui.maximize();
+    
+    // shader gui settings
+    shaderGui.setup("shaders");
+    shaderGui.setSize(110, 12);
+    shaderGui.setDefaultWidth(110);
+    shaderGui.setDefaultHeight(12);
+    shaderGui.setPosition(160, 10);
+    shaderGui.add(blurMix.setup("blur mix", 0.0, 0.0, 1.0));
+    shaderGui.add(blurQuality.setup("blur quality", 3.0, 1.0, 9.0));
+    shaderGui.add(blurAngles.setup("blur angles", 16.0, 1.0, 32.0));
+    shaderGui.add(blurRadius.setup("blur radius", 8.0, 1.0, 50.0));
+    shaderGui.add(contrastAmount.setup("contrast", 1.0, 1.0, 8.0));
     
     // simulation settings
     fluidSystem.setWidth(systemWidth);
@@ -136,9 +156,15 @@ void ofApp::update() {
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+    // nest our main fbos and shader fbo
     systemFbo.begin();
     ofClear(0, 0, 0);
+    contrastFbo.begin();
+    ofClear(0, 0, 0);
+    blurFbo.begin();
+    ofClear(0, 0, 0);
     
+    // begin svg export
     if (fluidSystem.exportFrameActive) {
         string filename = to_string(numberParticles) + "-" + ofGetTimestampString("%F") + ".svg";
         ofBeginSaveScreenAsSVG(filename);
@@ -150,10 +176,32 @@ void ofApp::draw(){
         ofBackground(backgroundColor);
     }
     
+    // main draw
+    ofBackground(backgroundColor);
     fluidSystem.draw();
+    
+    // blur shader
+    blurFbo.end();
+    blur.begin();
+    blur.setUniform1f("u_blurMix", blurMix);
+    blur.setUniform1f("u_blurQuality", blurQuality);
+    blur.setUniform1f("u_blurAngles", blurAngles);
+    blur.setUniform1f("u_blurRadius", blurRadius);
+    blurFbo.draw(0, 0);
+    blur.end();
+    
+    // contrast shader
+    contrastFbo.end();
+    contrast.begin();
+    contrast.setUniform1f("u_contrastAmount", contrastAmount);
+    contrastFbo.draw(0, 0);
+    contrast.end();
+
+    // syphon fbo
     systemFbo.end();
     systemFbo.draw(0, 0, ofGetWidth(), ofGetHeight());
     
+    // end svg export
     if (fluidSystem.exportFrameActive) {
         ofEndSaveScreenAsSVG();
         fluidSystem.exportFrameActive = false;
@@ -165,6 +213,7 @@ void ofApp::draw(){
     gui.draw();
     coolColorGui.draw();
     hotColorGui.draw();
+    shaderGui.draw();
 
     std::stringstream strm;
     strm << "fps: " << ofGetFrameRate();

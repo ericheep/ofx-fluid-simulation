@@ -26,12 +26,20 @@ public:
 private:
     FluidSystem2D fluidSystem;
     ofEasyCam cam;
+    
+    ofShader blur;
+    ofShader bloom;
+    ofShader contrast;
+    
+    ofFbo blurFbo;
+    ofFbo bloomFbo;
+    ofFbo contrastFbo;
 
     ofxSyphonServer individualTextureSyphonServer;
     ofxOscReceiver oscReceiver;
     ofFbo systemFbo;
     
-    ofxPanel gui, coolColorGui, hotColorGui;
+    ofxPanel gui, coolColorGui, hotColorGui, shaderGui;
     ofParameterGroup simulationSettings;
     ofParameterGroup boundarySettings;
     
@@ -56,6 +64,8 @@ private:
 
     ofxFloatSlider lineThickness;
     ofxFloatSlider centerX, centerY, gravityRotationIncrement;
+    ofxFloatSlider blurQuality, blurAngles, blurRadius, blurMix;
+    ofxFloatSlider contrastAmount;
 
     ofxButton resetRandomButton, resetGridButton;
     ofxColorSlider coolColor, hotColor, backgroundColor;
